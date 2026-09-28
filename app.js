@@ -212,7 +212,7 @@ function noteCard(note) {
         <small>${compact(note.downloads)} · · ${compact(note.likes_count)}</small>
         <div class="result-actions">
           <button class="ghost-btn" data-note-preview="${note.id}">Önizle</button>
-          <button class="ghost-btn" data-note-like="${note.id}">♥</button>
+          <button class="ghost-btn" data-note-like="${note.id}"></button>
           <button class="ghost-btn" data-note-save="${note.id}">Kaydet</button>
           <button class="ghost-btn" data-note-rate="${note.id}">Puanla</button>
           <button class="secondary-btn" data-note-download="${note.id}">İndir</button>
@@ -567,10 +567,10 @@ function renderCatalogPagination(total) {
 function catalogLevelOverview() {
   const cards = [
     {key:"highschool",icon:"" "",title:"Lise",text:"Lise dersleri, sınav hazırlığı ve konu kaynakları için ayrı kaynak merkezi. Yükseköğretim kataloğundan bağımsız tutulur.",status:"Kaynak katmanı"},
-    {key:"associate",icon:"🎓",title:"Ön Lisans",text:(catalogMeta.levels["Ön Lisans"]||0).toLocaleString("tr-TR")+" program türü; Türkiye program–üniversite kayıtları ayrıca sayfalanır.",status:"Katalogda mevcut"},
-    {key:"undergrad",icon:"🎓",title:"Lisans",text:(catalogMeta.levels["Lisans"]||0).toLocaleString("tr-TR")+" program türü; Türkiye program–üniversite kayıtları ayrıca sayfalanır.",status:"Katalogda mevcut"},
+    {key:"associate",icon:"",title:"Ön Lisans",text:(catalogMeta.levels["Ön Lisans"]||0).toLocaleString("tr-TR")+" program türü; Türkiye program–üniversite kayıtları ayrıca sayfalanır.",status:"Katalogda mevcut"},
+    {key:"undergrad",icon:"",title:"Lisans",text:(catalogMeta.levels["Lisans"]||0).toLocaleString("tr-TR")+" program türü; Türkiye program–üniversite kayıtları ayrıca sayfalanır.",status:"Katalogda mevcut"},
     {key:"graduate",icon:"🧪",title:"Yüksek Lisans",text:"Lisansüstü veri, mevcut YÖK 2025 lisans/ön lisans verisine karıştırılmıyor. Ayrı kaynak katmanı için hazır.",status:"Lisansüstü katmanı"},
-    {key:"doctorate",icon:"🔬",title:"Doktora",text:"Doktora ve araştırma kaynakları için ayrı katman. Resmî veri olmadan sayı üretilmiyor.",status:"Lisansüstü katmanı"}
+    {key:"doctorate",icon:"",title:"Doktora",text:"Doktora ve araştırma kaynakları için ayrı katman. Resmî veri olmadan sayı üretilmiyor.",status:"Lisansüstü katmanı"}
   ];
   return '<div class="catalog-level-overview">'+cards.map((card)=>'<article class="catalog-level-overview-card"><span class="catalog-level-icon">'+card.icon+'</span><span class="source-badge official">'+escapeHtml(card.status)+'</span><h3>'+escapeHtml(card.title)+'</h3><p>'+escapeHtml(card.text)+'</p><button class="secondary-btn" type="button" data-education-level="'+card.key+'">Bu düzeyi aç</button></article>').join("")+'</div>';
 }
@@ -1056,7 +1056,10 @@ function removeTask(id) {
 const preferenceDefaults={education_level:"Lisans",university:"",department:"",study_year:"",goal:"",daily_minutes:60,focus_mode:"pomodoro",theme:"system",notifications:true,preferred_topics:[]};
 function readLocalPreferences(){try{const raw=JSON.parse(localStorage.getItem("notora_preferences")||"null");return{...preferenceDefaults,...(raw||{})};}catch{return{...preferenceDefaults};}}
 function writeLocalPreferences(prefs){try{localStorage.setItem("notora_preferences",JSON.stringify(prefs));}catch{}}
-function applyTheme(theme){document.body.dataset.theme=theme==="dark"?"dark":"";}
+function applyTheme(theme){
+  const mode = theme === "dark" || (theme !== "light" && window.matchMedia?.("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  document.body.dataset.theme = mode;
+}
 function preferencesFromForm(){return{education_level:$("#prefEducationLevel")?.value||"Lisans",university:$("#prefUniversity")?.value.trim()||"",department:$("#prefDepartment")?.value.trim()||"",study_year:$("#prefYear")?.value||"",goal:$("#prefGoal")?.value.trim()||"",daily_minutes:Number($("#prefDailyMinutes")?.value||60),focus_mode:$("#prefFocusMode")?.value||"pomodoro",theme:$("#prefTheme")?.value||"system",notifications:true,preferred_topics:($("#prefTopics")?.value||"").split(",").map((x)=>x.trim()).filter(Boolean).slice(0,12)};}
 function renderPreferences(prefs=readLocalPreferences()){const map=[["prefEducationLevel","education_level"],["prefUniversity","university"],["prefDepartment","department"],["prefYear","study_year"],["prefGoal","goal"],["prefDailyMinutes","daily_minutes"],["prefFocusMode","focus_mode"],["prefTheme","theme"]];for(const[id,key]of map){const el=$("#"+id);if(el&&prefs[key]!==undefined&&prefs[key]!==null)el.value=String(prefs[key]);}if($("#prefTopics"))$("#prefTopics").value=(prefs.preferred_topics||[]).join(", ");applyTheme(prefs.theme);updatePersonalWelcome(prefs);renderPreferenceChips(prefs);}
 function updatePersonalWelcome(prefs){const welcome=$("#personalWelcome");if(!welcome)return;const title=prefs.department||prefs.goal||prefs.university?"Çalışma alanın hazır":"Hoş geldin";const detail=[prefs.department,prefs.study_year?prefs.study_year+". sınıf":"",prefs.goal].filter(Boolean).join(" · ");welcome.querySelector("strong")&&(welcome.querySelector("strong").textContent=title);welcome.querySelector("span")&&(welcome.querySelector("span").textContent=detail||"Profilini tamamladığında ana sayfa sana göre şekillenecek.");}
