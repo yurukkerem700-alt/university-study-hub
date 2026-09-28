@@ -1072,7 +1072,16 @@ function updateTodayDashboard(){const focus=getFocusState();const tasks=readTask
 function renderTodayFocus(){const prefs=readLocalPreferences();if($("#todayFocusTitle"))$("#todayFocusTitle").textContent=prefs.goal?"Bugünkü hedef: "+prefs.goal:"Bugünkü çalışma oturumunu başlat.";if($("#todayFocusText"))$("#todayFocusText").textContent="Günlük hedefin "+(prefs.daily_minutes||60)+" dakika. Bir oturum başlatıp tek konuya odaklan.";updateTodayDashboard();}
 const routeTitles={home:"Ana Sayfa",discover:"Keşfet",catalog:"Üniversite & Bölüm",roadmap:"Yol Haritası",calendar:"Takvim",tools:"Çalışma",community:"Topluluk",profile:"Profil"};
 function currentRoute(){const raw=window.location.hash.replace(/^#\/?/,"").split("?")[0];return routeTitles[raw]?raw:"home";}
-function renderRoute(){const route=currentRoute();$$(".page-view").forEach((page)=>page.classList.toggle("active",page.dataset.route===route));$$(".topbar [data-route-link]").forEach((link)=>link.classList.toggle("active",link.dataset.routeLink===route));document.title="Notora — "+routeTitles[route];if(route==="catalog")loadCatalog();if(route==="roadmap")renderRoadmap();if(route==="discover"||route==="calendar")loadAll();}
+function renderRoute(){
+  const route=currentRoute();
+  $$("[data-route]").forEach((page)=>page.classList.toggle("active",page.dataset.route===route));
+  $$("[data-route-link]").forEach((link)=>link.classList.toggle("active",link.dataset.routeLink===route));
+  document.title="Notora — "+routeTitles[route];
+  if($("#commandPageTitle"))$("#commandPageTitle").textContent=routeTitles[route];
+  if(route==="catalog")loadCatalog();
+  if(route==="roadmap")renderRoadmap();
+  if(route==="discover"||route==="calendar")loadAll();
+}
 function openNoteReader(note){const modal=$("#readerModal"),frame=$("#readerFrame"),fallback=$("#readerFallback");if(!modal||!frame)return;const url=SUPABASE_URL+"/storage/v1/object/public/note-files/"+note.file_path.split("/").map(encodeURIComponent).join("/");const isPdf=/\.pdf$/i.test(note.file_name||note.file_path);$("#readerTitle").textContent=note.title||"Öğrenci kaynağı";$("#readerMeta").textContent=[note.department,note.study_year?note.study_year+". sınıf":"",note.content_type].filter(Boolean).join(" · ");frame.classList.toggle("hidden",!isPdf);fallback.classList.toggle("hidden",isPdf);if(isPdf){frame.src=url;fallback.innerHTML='<a class="primary-btn" href="'+escapeHtml(url)+'" target="_blank" rel="noopener">PDF’yi aç</a>';}else{frame.removeAttribute("src");fallback.innerHTML='<b>Bu dosya türü tarayıcı içinde önizlenemiyor.</b><p>Dosya Notora kütüphanesinde tutuluyor.</p><a class="secondary-btn" href="'+escapeHtml(url)+'" target="_blank" rel="noopener">Dosyayı aç</a>';}modal.classList.remove("hidden");}
 async function shareProfileView(){const url=new URL(window.location.href);url.search="";url.hash="#/profile";try{await navigator.clipboard.writeText(url.toString());showToast("Profil bağlantısı kopyalandı.");}catch{window.prompt("Bağlantıyı kopyala:",url.toString());}}
 function buildShareUrl() {
