@@ -13,7 +13,7 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, 
 let authSubscription = null;
 
 const $ = (selector) => document.querySelector(selector);
-const $ = (selector) => [...document.querySelectorAll(selector)];
+const $$ = (selector) => [...document.querySelectorAll(selector)];
 
 const normalizeSearchTerm = (value) =>
   String(value ?? "")
@@ -1058,9 +1058,9 @@ function bindCatalogEvents() {
     renderCatalog();
   });
 
-  $(".catalog-tab").forEach((button) => {
+  $$(".catalog-tab").forEach((button) => {
     button.addEventListener("click", () => {
-      $(".catalog-tab").forEach((item) => item.classList.remove("active"));
+      $$(".catalog-tab").forEach((item) => item.classList.remove("active"));
       button.classList.add("active");
       catalogState.kind = button.dataset.kind;
       $("#catalogCity")?.classList.toggle("hidden", catalogState.kind !== "universities");
