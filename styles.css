@@ -77,3 +77,38 @@ main{gap:28px;padding-top:26px}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid rgba(11,127,116,.22);outline-offset:3px}
 @media (max-width:1050px){.hero{grid-template-columns:1fr;min-height:auto}.hero-side{margin-top:6px}.browse-grid{grid-template-columns:1fr}.filters{order:0}.section-intro h2{font-size:28px}}
 @media (max-width:700px){.shell{padding:10px 12px 48px}.hero{padding:25px 20px}.hero h1{font-size:48px}.trust-strip{display:grid;gap:6px}.results-panel,.calendar-panel,.source-panel,.tools-panel,.community-panel{padding:19px}.section-head h2{font-size:25px}}
+
+
+/* ===== Notora v4: authentication + Turkey catalog ===== */
+.topbar nav a{position:relative}
+.topbar nav a::after{content:"";position:absolute;left:7px;right:7px;bottom:2px;height:2px;border-radius:2px;background:var(--primary);transform:scaleX(0);transform-origin:center;transition:.18s}
+.topbar nav a:hover::after{transform:scaleX(1)}
+.catalog-panel{padding:28px}
+.catalog-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+.catalog-stats>div{padding:17px 18px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(145deg,#fff,#f8fbfa)}
+.catalog-stats span{display:block;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.catalog-stats strong{display:block;font:800 28px Manrope;margin-top:6px;letter-spacing:-.06em}
+.catalog-toolbar{display:grid;grid-template-columns:auto minmax(220px,1fr) 180px 180px;gap:8px;align-items:center;margin-top:18px}
+.catalog-tabs{display:flex;gap:5px}
+.catalog-tab{border:1px solid var(--line);background:#fff;color:var(--muted);padding:10px 13px;border-radius:11px;font-size:11px;font-weight:800}
+.catalog-tab.active{background:var(--soft);color:var(--primary2);border-color:#b7ded8}
+.catalog-toolbar input,.catalog-toolbar select{height:41px;border:1px solid var(--line);background:#fbfcfb;border-radius:11px;padding:0 12px;color:var(--text);min-width:0}
+.catalog-result-line{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:10px;margin:13px 1px 0}
+.catalog-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:11px}
+.catalog-card{padding:17px;border:1px solid var(--line);border-radius:17px;background:#fff;transition:.18s;min-height:164px}
+.catalog-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:#cbdad4}
+.catalog-card-top{display:flex;justify-content:space-between;gap:8px}
+.catalog-badge{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;padding:6px 8px;border-radius:999px;background:var(--surface-tint);color:var(--primary2)}
+.catalog-city{font-size:10px;color:var(--muted);font-weight:800}
+.catalog-card h3{font-size:15px;line-height:1.35;margin:11px 0 7px}
+.catalog-card p{font-size:11px;line-height:1.55;color:var(--muted);margin:0}
+.catalog-meta{display:flex;justify-content:space-between;gap:8px;border-top:1px solid #edf1ef;padding-top:9px;margin-top:10px;font-size:9px;color:var(--muted)}
+.password-field{position:relative;display:flex;align-items:center}
+.password-field input{padding-right:70px!important;width:100%}
+.password-toggle{position:absolute;right:6px;height:30px;padding:0 9px;border:0;border-radius:8px;background:#eef4f1;color:var(--primary2);font-size:10px;font-weight:900}
+.auth-message{min-height:18px;margin:11px 0 0;font-size:11px;line-height:1.5}
+.auth-message.error{color:#b33838}
+.auth-message.success{color:#177a62}
+#authSubmit:disabled{opacity:.65;cursor:wait}
+@media(max-width:1050px){.catalog-toolbar{grid-template-columns:1fr 1fr}.catalog-tabs{grid-column:1/-1}.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.catalog-stats{grid-template-columns:1fr}.catalog-toolbar{grid-template-columns:1fr}.catalog-grid{grid-template-columns:1fr}.catalog-tabs{display:grid;grid-template-columns:1fr 1fr}.catalog-result-line{display:block}.catalog-result-line span:last-child{display:block;margin-top:4px}}
