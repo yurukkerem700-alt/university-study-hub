@@ -913,3 +913,4 @@ renderTimer();
 bindEvents();
 refreshAuthUi();
 loadAll();
+renderRoadmap();
