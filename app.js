@@ -1,155 +1,19 @@
-const notes = [
-  { id: 1, title: 'Veri Yapıları: Ağacın Temelleri ve AVL Analizi', department: 'Bilgisayar Mühendisliği', year: '3', topic: 'Veri Yapıları', type: 'Ders Notu', university: 'İstanbul Teknik Üniversitesi', lecturer: 'Dr. Elif Demir', rating: 4.9, downloads: 4280, likes: 316, date: '4 gün önce', badge: 'Özellikle yararlı' },
-  { id: 2, title: 'Makro Ekonomi Sınav Özet Notları', department: 'İktisat', year: '2', topic: 'Makro Ekonomi', type: 'Sınav Hazırlık', university: 'Boğaziçi Üniversitesi', lecturer: 'Prof. Ahmet Yılmaz', rating: 4.8, downloads: 3510, likes: 244, date: '2 gün önce', badge: 'Sınav canlısı' },
-  { id: 3, title: 'İnternet Hukuku: Kişisel Veri ve Tüketici Hakları', department: 'Hukuk', year: '4', topic: 'İnternet Hukuku', type: 'Özet', university: 'Ankara Üniversitesi', lecturer: 'Doç. Filiz Erdem', rating: 5, downloads: 2875, likes: 301, date: '1 hafta önce', badge: 'Yeni' },
-  { id: 4, title: 'Anatomi Ders Notu: Solunum ve Dolaşım Sistemi', department: 'Tıp', year: '2', topic: 'Anatomi', type: 'Slayt', university: 'Hacettepe Üniversitesi', lecturer: 'Prof. Deniz Arslan', rating: 4.9, downloads: 6210, likes: 420, date: '3 gün önce', badge: 'Popüler' },
-  { id: 5, title: 'Devre Analizi: AC ve DC Analizi Kolaylaştırılmış', department: 'Elektrik-Elektronik Mühendisliği', year: '3', topic: 'Devre Analizi', type: 'Ders Notu', university: 'Ege Üniversitesi', lecturer: 'Dr. Serkan Kaya', rating: 4.7, downloads: 2490, likes: 192, date: '5 gün önce', badge: 'Kısa anlatım' },
-  { id: 6, title: 'İstatistik Final Hazırlık: Olasılık ve Dağılımlar', department: 'İktisat', year: '1', topic: 'Makro Ekonomi', type: 'Sınav Hazırlık', university: 'Sabancı Üniversitesi', lecturer: 'Prof. Büşra Şahin', rating: 4.8, downloads: 1988, likes: 148, date: '6 saat önce', badge: 'Hızlı tekrar' }
-];
-
-const state = { search: '', department: 'all', year: 'all', topic: 'all', type: 'all', mode: 'student', sortBy: 'popular' };
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => [...document.querySelectorAll(selector)];
-const elements = {
-  search: $('#searchInput'), department: $('#departmentSelect'), year: $('#yearSelect'), topic: $('#topicSelect'), type: $('#typeSelect'),
-  grid: $('#notesGrid'), reset: $('#resetFilters'), toast: $('#toast'), modal: $('#teacherModal'), form: $('.teacher-form')
-};
-
-function showToast(message) {
-  if (!elements.toast) return;
-  elements.toast.textContent = message;
-  elements.toast.classList.add('show');
-  clearTimeout(showToast.timer);
-  showToast.timer = setTimeout(() => elements.toast.classList.remove('show'), 2200);
-}
-
-function normalize(value) { return String(value).toLocaleLowerCase('tr-TR').trim(); }
-
-function filterNotes() {
-  const query = normalize(state.search);
-  return notes.filter((note) => {
-    const searchable = normalize([note.title, note.department, note.topic, note.lecturer, note.university].join(' '));
-    return (!query || searchable.includes(query)) &&
-      (state.department === 'all' || note.department === state.department) &&
-      (state.year === 'all' || note.year === state.year) &&
-      (state.topic === 'all' || note.topic === state.topic) &&
-      (state.type === 'all' || note.type === state.type);
-  });
-}
-
-function formatNumber(value) {
-  return new Intl.NumberFormat('tr-TR', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
-}
-
-function sortedNotes() {
-  const result = [...filterNotes()];
-  if (state.sortBy === 'newest') {
-    const age = { '6 saat önce': 0, '2 gün önce': 1, '3 gün önce': 2, '4 gün önce': 3, '5 gün önce': 4, '1 hafta önce': 5 };
-    return result.sort((a, b) => (age[a.date] ?? 99) - (age[b.date] ?? 99));
-  }
-  return result.sort((a, b) => b.downloads - a.downloads);
-}
-
-function renderNotes() {
-  const visible = sortedNotes();
-  if (!visible.length) {
-    elements.grid.innerHTML = '<div class="note-card empty-state" style="grid-column:1/-1"><div class="note-kicker">Sonuç bulunamadı</div><h3>Aramanıza uygun içerik bulunamadı.</h3><p class="note-meta">Filtreleri değiştirerek daha geniş bir sonuç seti alabilirsiniz.</p></div>';
-    return;
-  }
-  elements.grid.innerHTML = visible.map((note) => `
-    <article class="note-card" aria-label="${note.title}">
-      <div class="note-top"><span class="note-kicker">${note.type}</span><span class="badge">${note.badge}</span></div>
-      <h3>${note.title}</h3>
-      <div class="note-meta"><div><strong>${note.department}</strong> · ${note.university}</div><div>${note.lecturer} · ${note.year}. sınıf</div></div>
-      <div class="note-footer"><div class="score-row"><span>⭐ ${note.rating}</span><span>⬇ ${formatNumber(note.downloads)}</span><span>♥ ${note.likes}</span></div><div class="note-actions"><button class="ghost-btn small" type="button" data-action="preview" data-id="${note.id}">Önizle</button><button class="secondary-btn small" type="button" data-action="download" data-id="${note.id}">İndir</button></div></div>
-    </article>`).join('');
-}
-
-function setFilter(name, value) { state[name] = value; renderNotes(); }
-
-function resetFilters() {
-  Object.assign(state, { search: '', department: 'all', year: 'all', topic: 'all', type: 'all' });
-  elements.search.value = '';
-  ['department', 'year', 'topic', 'type'].forEach((key) => { elements[key].value = 'all'; });
-  $$('.quick-tags .chip').forEach((chip, index) => chip.classList.toggle('active', index === 0));
-  renderNotes();
-  showToast('Filtreler temizlendi');
-}
-
-function closeModal() {
-  elements.modal.classList.add('hidden');
-  elements.modal.setAttribute('aria-hidden', 'true');
-}
-
-function openModal() {
-  elements.modal.classList.remove('hidden');
-  elements.modal.setAttribute('aria-hidden', 'false');
-  elements.form?.querySelector('input')?.focus();
-}
-
-function bindEvents() {
-  elements.search.addEventListener('input', (event) => setFilter('search', event.target.value));
-  elements.search.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') showToast(state.search.trim() ? `"${state.search.trim()}" için arama yapılıyor...` : 'Bir arama terimi girin');
-  });
-  ['department', 'year', 'topic', 'type'].forEach((key) => elements[key].addEventListener('change', (event) => setFilter(key, event.target.value)));
-  elements.reset.addEventListener('click', resetFilters);
-
-  elements.grid.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-action]');
-    if (!button) return;
-    const note = notes.find((item) => item.id === Number(button.dataset.id));
-    if (!note) return;
-    if (button.dataset.action === 'download') {
-      note.downloads += 1;
-      renderNotes();
-      showToast(`${note.title} indiriliyor...`);
-    } else showToast(`${note.title} önizlemede açıldı.`);
-  });
-
-  $$('.quick-tags .chip').forEach((chip) => chip.addEventListener('click', () => {
-    const map = { Mühendislik: 'Bilgisayar Mühendisliği', İktisat: 'İktisat', Hukuk: 'Hukuk', Tıp: 'Tıp' };
-    $$('.quick-tags .chip').forEach((item) => item.classList.remove('active'));
-    chip.classList.add('active');
-    const value = map[chip.textContent.trim()] || 'all';
-    elements.department.value = value;
-    setFilter('department', value);
-    showToast(`${chip.textContent.trim()} bölümü seçildi`);
-  }));
-
-  $('.search-btn')?.addEventListener('click', () => showToast(state.search.trim() ? `"${state.search.trim()}" için arama yapılıyor...` : 'Lütfen bir arama terimi girin'));
-  $('.library-header .secondary-btn')?.addEventListener('click', (event) => {
-    state.sortBy = state.sortBy === 'popular' ? 'newest' : 'popular';
-    event.currentTarget.textContent = state.sortBy === 'popular' ? 'Yeni eklenenler' : 'En popüler';
-    renderNotes();
-    showToast(state.sortBy === 'popular' ? 'En popüler kaynaklar gösteriliyor' : 'Yeni eklenenler gösteriliyor');
-  });
-
-  $('.header-actions .ghost-btn')?.addEventListener('click', openModal);
-  $('.header-actions .primary-btn')?.addEventListener('click', () => showToast('Not paylaşım formu yakında kullanıma açılacak.'));
-  $('.teacher-login-trigger')?.addEventListener('click', openModal);
-  $('.modal-close')?.addEventListener('click', closeModal);
-  $('[data-close="modal"]')?.addEventListener('click', closeModal);
-  elements.form?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    if (!elements.form.checkValidity()) { elements.form.reportValidity(); return; }
-    closeModal();
-    elements.form.reset();
-    showToast('Giriş bilgileri alındı. Demo modunda panel açıldı.');
-  });
-
-  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !elements.modal.classList.contains('hidden')) closeModal(); });
-  $$('.segment').forEach((button) => button.addEventListener('click', () => {
-    state.mode = button.dataset.mode;
-    $$('.segment').forEach((item) => item.classList.toggle('active', item === button));
-    if (state.mode === 'teacher') $('#teacher')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    showToast(state.mode === 'teacher' ? 'Öğretmen modu etkinleştirildi' : 'Öğrenci modu etkinleştirildi');
-  }));
-  $$('.main-nav a').forEach((link) => link.addEventListener('click', (event) => {
-    const target = document.querySelector(link.getAttribute('href'));
-    if (target) { event.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-  }));
-}
-
-renderNotes();
-bindEvents();
+const SUPABASE_URL="https://snvteuqzstctmqlsgyhr.supabase.co";const SUPABASE_KEY="sb_publishable_0oJW2Ui715WZdqQmVp23TPw_vU4E93ZK";const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const notes=[];const state={search:"",department:"all",year:"all",topic:"all",type:"all",sort:"popular"};const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function toast(m){const e=$("#toast");if(!e)return;e.textContent=m;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),2200)}
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));const num=n=>new Intl.NumberFormat("tr-TR",{notation:"compact",maximumFractionDigits:1}).format(n||0);
+function ensureModals(){if($("#authModal"))return;document.body.insertAdjacentHTML("beforeend",`
+<div class="modal hidden" id="authModal"><div class="modal-backdrop" data-close></div><div class="modal-card"><button class="modal-close" data-close>×</button><span class="eyebrow">Hesap</span><h3 id="authTitle">Giriş yap</h3><p class="auth-hint">Notları kaydetmek, puanlamak ve paylaşmak için hesabını kullan.</p><form id="authForm"><label>E-posta<input id="authEmail" type="email" required></label><label>Şifre<input id="authPassword" type="password" minlength="6" required></label><label id="authNameWrap">Ad Soyad<input id="authName"></label><button class="primary-btn" type="submit" id="authSubmit">Giriş Yap</button></form><button class="text-btn" id="authSwitch">Hesabın yok mu? Kayıt ol</button></div></div>
+<div class="modal hidden" id="shareModal"><div class="modal-backdrop" data-close></div><div class="modal-card wide"><button class="modal-close" data-close>×</button><span class="eyebrow">Topluluk</span><h3>Not paylaş</h3><form id="shareForm"><div class="upload-grid"><label>Başlık<input name="title" required></label><label>Bölüm<select name="department" required><option>Bilgisayar Mühendisliği</option><option>Elektrik-Elektronik Mühendisliği</option><option>İktisat</option><option>Hukuk</option><option>Tıp</option></select></label><label>Sınıf<select name="study_year"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><label>Konu<input name="topic"></label><label>Tür<select name="content_type"><option>Ders Notu</option><option>Sınav Hazırlık</option><option>Özet</option><option>Slayt</option></select></label><label>Üniversite<input name="university"></label><label class="full">Açıklama<textarea name="description" rows="3"></textarea></label><label class="full">Dosya<input name="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" required></label></div><button class="primary-btn" type="submit">Yükle ve paylaş</button></form></div></div>`);$$("[data-close]").forEach(x=>x.onclick=closeModals)}
+function openModal(id){$(id)?.classList.remove("hidden")}function closeModals(){$$(".modal").forEach(x=>x.classList.add("hidden"))}
+async function session(){return (await db.auth.getSession()).data.session}
+async function authUI(){const s=await session();const b=$(".header-actions .ghost-btn");if(b)b.textContent=s?"Çıkış Yap":"Giriş Yap"}
+async function load(){const grid=$("#notesGrid");grid.innerHTML='<div class="loading">Kaynaklar yükleniyor…</div>';let q=db.from("notes").select("*").eq("status","published");if(state.department!=="all")q=q.eq("department",state.department);if(state.year!=="all")q=q.eq("study_year",+state.year);if(state.topic!=="all")q=q.eq("topic",state.topic);if(state.type!=="all")q=q.eq("content_type",state.type);if(state.search)q=q.or("title.ilike.%"+state.search+"%,description.ilike.%"+state.search+"%,topic.ilike.%"+state.search+"%,lecturer.ilike.%"+state.search+"%");q=state.sort==="newest"?q.order("created_at",{ascending:false}):state.sort==="rating"?q.order("rating",{ascending:false}):q.order("downloads",{ascending:false});const r=await q.limit(50);if(r.error){grid.innerHTML='<div class="loading">Kaynaklar yüklenemedi.</div>';toast(r.error.message);return}notes.splice(0,notes.length,...(r.data||[]));render();updateStats();loadLeaders()}
+function render(){const g=$("#notesGrid");if(!notes.length){g.innerHTML='<div class="note-card empty-state" style="grid-column:1/-1"><h3>Sonuç bulunamadı</h3><p class="note-meta">Filtreleri değiştirerek tekrar deneyin.</p></div>';return}g.innerHTML=notes.map(n=>`<article class="note-card"><div class="note-top"><span class="note-kicker">${esc(n.content_type)}</span><span class="badge">${n.rating>=4.9?"Çok beğenildi":"Kaynak"}</span></div><h3>${esc(n.title)}</h3><div class="note-meta"><strong>${esc(n.department)}</strong> · ${esc(n.university||"Topluluk")}<br>${esc(n.lecturer||"Topluluk kaynağı")} · ${n.study_year||"-"}. sınıf · ${esc(n.topic||"Genel")}</div><div class="note-footer"><div class="score-row"><span>⭐ ${Number(n.rating||0).toFixed(1)}</span><span>⬇ ${num(n.downloads)}</span><span>♥ ${num(n.likes_count)}</span></div><div class="note-actions"><button class="ghost-btn small" data-preview="${n.id}">Önizle</button><button class="secondary-btn small" data-download="${n.id}">İndir</button></div></div></article>`).join("")}
+function updateStats(){const d=notes.reduce((a,n)=>a+(n.downloads||0),0);const r=notes.filter(n=>n.ratings_count);$("#statNotes").textContent=num(notes.length);$("#statDownloads").textContent=num(d);$("#statRating").textContent=r.length?(r.reduce((a,n)=>a+Number(n.rating||0),0)/r.length).toFixed(1):"—";$("#statActive").textContent=num(notes.length)}
+async function loadLeaders(){const l=$("#leaderList");const {data}=await db.from("notes").select("uploader_id,downloads,likes_count").eq("status","published").not("uploader_id","is",null);const scores={};(data||[]).forEach(n=>scores[n.uploader_id]=(scores[n.uploader_id]||0)+(n.downloads||0)+(n.likes_count||0)*5);const top=Object.entries(scores).sort((a,b)=>b[1]-a[1]).slice(0,5);if(!top.length){l.innerHTML='<div class="loading">Henüz sıralama oluşmadı.</div>';return}const {data:p}=await db.from("profiles").select("id,display_name,department").in("id",top.map(x=>x[0]));l.innerHTML=top.map((x,i)=>{const u=(p||[]).find(p=>p.id===x[0]);return`<div class="leader-item"><div class="rank">#${i+1}</div><div class="leader-meta"><strong>${esc(u?.display_name||"Katılımcı")}</strong><span>${esc(u?.department||"Notora üyesi")}</span></div><div class="leader-score">${num(x[1])}</div></div>`}).join("")}
+async function needUser(){const s=await session();if(s)return s.user;openModal("#authModal");toast("Önce giriş yapmalısın.");return null}
+async function upload(e){e.preventDefault();const u=await needUser();if(!u)return;const f=new FormData(e.currentTarget),file=f.get("file");const path=u.id+"/"+crypto.randomUUID()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");let r=await db.storage.from("note-files").upload(path,file);if(r.error){toast("Dosya yüklenemedi.");return}r=await db.from("notes").insert({title:f.get("title"),department:f.get("department"),study_year:+f.get("study_year"),topic:f.get("topic")||null,content_type:f.get("content_type"),university:f.get("university")||null,description:f.get("description")||null,file_path:path,file_name:file.name,file_size:file.size,uploader_id:u.id,status:"published"});if(r.error){await db.storage.from("note-files").remove([path]);toast("Not kaydedilemedi.");return}closeModals();e.currentTarget.reset();toast("Not başarıyla paylaşıldı.");load()}
+async function download(id){const n=notes.find(x=>x.id===+id);if(!n?.file_path){toast("Bu kaynakta henüz dosya yok.");return}const r=await db.storage.from("note-files").download(n.file_path);if(r.error){toast("Dosya indirilemedi.");return}const a=document.createElement("a");a.href=URL.createObjectURL(r.data);a.download=n.file_name||"not";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);await db.rpc("increment_downloads",{note_id:n.id});n.downloads=(n.downloads||0)+1;updateStats();toast("İndirme başlatıldı.")}
+function bind(){ensureModals();["department","year","topic","type"].forEach(k=>$("#"+k+"Select")?.addEventListener("change",e=>{state[k]=e.target.value;load()}));$("#searchInput")?.addEventListener("input",e=>{state.search=e.target.value.trim();clearTimeout(bind.t);bind.t=setTimeout(load,300)});$("#sortSelect")?.addEventListener("change",e=>{state.sort=e.target.value;load()});$("#resetFilters")?.addEventListener("click",()=>{Object.assign(state,{search:"",department:"all",year:"all",topic:"all",type:"all"});$("#searchInput").value="";["department","year","topic","type"].forEach(k=>$("#"+k+"Select").value="all");load();toast("Filtreler temizlendi")});$$(".quick-tags .chip").forEach(c=>c.onclick=()=>{$$(".quick-tags .chip").forEach(x=>x.classList.remove("active"));c.classList.add("active");state.department=c.dataset.dept||"all";$("#departmentSelect").value=state.department;load()});$(".search-btn")?.addEventListener("click",load);$(".header-actions .ghost-btn")?.addEventListener("click",async()=>{if(await session()){await db.auth.signOut();toast("Çıkış yapıldı.");authUI()}else openModal("#authModal")});[".header-actions .primary-btn",".teacher-login-trigger"].forEach(sel=>$(sel)?.addEventListener("click",async()=>{if(await needUser())openModal("#shareModal")}));$("#authForm").onsubmit=async e=>{e.preventDefault();const email=$("#authEmail").value,password=$("#authPassword").value;let r;if($("#authNameWrap").style.display!=="none")r=await db.auth.signUp({email,password,options:{data:{display_name:$("#authName").value||"Öğrenci"}}});else r=await db.auth.signInWithPassword({email,password});if(r.error){toast(r.error.message);return}closeModals();toast("İşlem başarılı.");authUI()};$("#authSwitch").onclick=()=>{const login=$("#authNameWrap").style.display==="none";$("#authNameWrap").style.display=login?"grid":"none";$("#authTitle").textContent=login?"Hesap oluştur":"Giriş yap";$("#authSubmit").textContent=login?"Kayıt Ol":"Giriş Yap";$("#authSwitch").textContent=login?"Zaten hesabın var mı? Giriş yap":"Hesabın yok mu? Kayıt ol"};$("#shareForm").onsubmit=upload;$("#notesGrid").onclick=e=>{const d=e.target.closest("[data-download]"),p=e.target.closest("[data-preview]");if(d)download(d.dataset.download);if(p){const n=notes.find(x=>x.id===+p.dataset.preview);if(n?.file_path)window.open(SUPABASE_URL+"/storage/v1/object/public/note-files/"+n.file_path,"_blank");else toast("Bu kaynak için dosya yok.")}};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModals()});db.auth.onAuthStateChange(authUI)}
+bind();authUI();load();
