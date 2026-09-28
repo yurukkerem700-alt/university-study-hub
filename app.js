@@ -1250,13 +1250,19 @@ function bindEvents() {
 
   $("#authBtn").addEventListener("click", async () => {
     if (await getSession()) {
-      await db.auth.signOut();
-      showToast("Çıkış yapıldı.");
-      refreshAuthUi();
+      window.location.hash = "#/profile";
       return;
     }
-
     openModal("#authModal");
+  });
+
+  $("#signOutBtn")?.addEventListener("click", async () => {
+    const session = await getSession();
+    if (!session) { openModal("#authModal"); return; }
+    const { error } = await db.auth.signOut();
+    if (error) { showToast("Çıkış yapılamadı."); return; }
+    showToast("Çıkış yapıldı.");
+    refreshAuthUi(null);
   });
 
   $$(".modal [data-close]").forEach((button) => {
