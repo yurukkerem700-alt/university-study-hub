@@ -569,8 +569,8 @@ function catalogLevelOverview() {
     {key:"highschool",icon:"" "",title:"Lise",text:"Lise dersleri, sınav hazırlığı ve konu kaynakları için ayrı kaynak merkezi. Yükseköğretim kataloğundan bağımsız tutulur.",status:"Kaynak katmanı"},
     {key:"associate",icon:"",title:"Ön Lisans",text:(catalogMeta.levels["Ön Lisans"]||0).toLocaleString("tr-TR")+" program türü; Türkiye program–üniversite kayıtları ayrıca sayfalanır.",status:"Katalogda mevcut"},
     {key:"undergrad",icon:"",title:"Lisans",text:(catalogMeta.levels["Lisans"]||0).toLocaleString("tr-TR")+" program türü; Türkiye program–üniversite kayıtları ayrıca sayfalanır.",status:"Katalogda mevcut"},
-    {key:"graduate",icon:"🧪",title:"Yüksek Lisans",text:"Lisansüstü veri, mevcut YÖK 2025 lisans/ön lisans verisine karıştırılmıyor. Ayrı kaynak katmanı için hazır.",status:"Lisansüstü katmanı"},
-    {key:"doctorate",icon:"",title:"Doktora",text:"Doktora ve araştırma kaynakları için ayrı katman. Resmî veri olmadan sayı üretilmiyor.",status:"Lisansüstü katmanı"}
+    {key:"graduate",icon:"03",title:"Yüksek Lisans",text:"Lisansüstü veri, mevcut YÖK 2025 lisans/ön lisans verisine karıştırılmıyor. Ayrı kaynak katmanı için hazır.",status:"Lisansüstü katmanı"},
+    {key:"doctorate",icon:"04",title:"Doktora",text:"Doktora ve araştırma kaynakları için ayrı katman. Resmî veri olmadan sayı üretilmiyor.",status:"Lisansüstü katmanı"}
   ];
   return '<div class="catalog-level-overview">'+cards.map((card)=>'<article class="catalog-level-overview-card"><span class="catalog-level-icon">'+card.icon+'</span><span class="source-badge official">'+escapeHtml(card.status)+'</span><h3>'+escapeHtml(card.title)+'</h3><p>'+escapeHtml(card.text)+'</p><button class="secondary-btn" type="button" data-education-level="'+card.key+'">Bu düzeyi aç</button></article>').join("")+'</div>';
 }
