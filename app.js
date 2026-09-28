@@ -292,6 +292,80 @@ function renderEvents() {
     : '<div class="loading">Yaklaşan kayıt bulunamadı.</div>';
 }
 
+
+async function fetchRoadmap(domain, year) {
+  const { data, error } = await db
+    .from("study_catalog")
+    .select("*")
+    .eq("domain", domain)
+    .eq("year_level", year)
+    .order("semester", { ascending: true })
+    .order("subject", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+async function renderRoadmap() {
+  const grid = $("#roadmapGrid");
+  if (!grid) return;
+
+  grid.innerHTML = '<div class="loading" style="grid-column:1/-1">Ders haritası yükleniyor…</div>';
+
+  try {
+    const domain = $("#roadmapDomain").value;
+    const year = Number(document.querySelector(".year-tab.active")?.dataset.year || 1);
+    const items = await fetchRoadmap(domain, year);
+
+    if (!items.length) {
+      grid.innerHTML = '<div class="loading" style="grid-column:1/-1">Bu alan ve sınıf için henüz yol haritası yok.</div>';
+      return;
+    }
+
+    const grouped = new Map();
+
+    items.forEach((item) => {
+      if (!grouped.has(item.subject)) {
+        grouped.set(item.subject, {
+          subject: item.subject,
+          semester: item.semester,
+          topics: [],
+          skills: new Set(),
+        });
+      }
+
+      const subject = grouped.get(item.subject);
+      subject.topics.push(item);
+      if (item.skill) subject.skills.add(item.skill);
+    });
+
+    grid.innerHTML = [...grouped.values()]
+      .map(
+        (subject) => `
+          <article class="roadmap-card">
+            <span class="semester">${subject.semester}. dönem</span>
+            <div class="subject">${escapeHtml(subject.subject)}</div>
+            ${subject.topics
+              .map(
+                (topic) => `
+                  <div class="roadmap-topic">
+                    <b>${escapeHtml(topic.topic)}</b>
+                    <span>${escapeHtml(topic.level)} · ${escapeHtml(topic.roadmap_type === "genel" ? "genel akademik" : "alan")}</span>
+                  </div>
+                `
+              )
+              .join("")}
+            <div class="roadmap-skill">Odak: ${escapeHtml([...subject.skills].join(" · "))}</div>
+          </article>
+        `
+      )
+      .join("");
+  } catch (error) {
+    console.error(error);
+    grid.innerHTML = '<div class="loading" style="grid-column:1/-1">Ders haritası yüklenemedi.</div>';
+  }
+}
+
 async function requireUser() {
   const session = await getSession();
   if (session) return session.user;
@@ -377,6 +451,7 @@ async function shareNote(event) {
   event.currentTarget.reset();
   showToast("Kaynak yayınlandı.");
   await loadAll();
+  renderRoadmap();
 }
 
 async function downloadNote(id) {
@@ -687,6 +762,15 @@ function bindEvents() {
       button.classList.add("active");
       state.tab = button.dataset.tab;
       loadAll();
+    });
+  });
+
+  $("#roadmapDomain")?.addEventListener("change", renderRoadmap);
+  $(".year-tab").forEach((button) => {
+    button.addEventListener("click", () => {
+      $(".year-tab").forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      renderRoadmap();
     });
   });
 
