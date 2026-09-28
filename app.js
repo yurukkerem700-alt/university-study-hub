@@ -1,5 +1,5 @@
 const SUPABASE_URL = "https://snvteuqzstctmqlsgyhr.supabase.co";
-const SUPABASE_KEY = "sb_publishable_0oJW2Ui715WZdqQmVp23TPw_vU4E93ZK";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudnRldXF6c3RjdG1xbHNneWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNjk1ODAsImV4cCI6MjEwNTY0NTU4MH0.cd6s5mWpaepkE2vlZWiEeMJLU_n3vQx6YBnHJRD2boI";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (selector) => document.querySelector(selector);
