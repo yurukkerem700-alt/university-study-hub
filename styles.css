@@ -112,3 +112,22 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 #authSubmit:disabled{opacity:.65;cursor:wait}
 @media(max-width:1050px){.catalog-toolbar{grid-template-columns:1fr 1fr}.catalog-tabs{grid-column:1/-1}.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.catalog-stats{grid-template-columns:1fr}.catalog-toolbar{grid-template-columns:1fr}.catalog-grid{grid-template-columns:1fr}.catalog-tabs{display:grid;grid-template-columns:1fr 1fr}.catalog-result-line{display:block}.catalog-result-line span:last-child{display:block;margin-top:4px}}
+
+
+/* ===== Notora v5 polish ===== */
+.status-card-live{background:linear-gradient(135deg,#fff,#f1fbf8);border-color:#cfe8e2}
+.status-chip{margin-left:auto;padding:4px 7px;border-radius:999px;background:#e7f7f2;color:#0b7f74;font-size:8px;font-weight:900;letter-spacing:.08em}
+.catalog-tabs{flex-wrap:wrap}
+.catalog-tab{transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
+.catalog-tab:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(25,55,45,.05)}
+.catalog-tab.active{box-shadow:0 6px 15px rgba(11,127,116,.06)}
+.catalog-source-note{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin-top:9px;color:var(--muted);font-size:10px}
+.catalog-source-note a{font-weight:900;color:var(--primary-strong)}
+.offer-card{min-height:186px;background:linear-gradient(155deg,#fff,#fbfdfc)}
+.offer-card h3{font-size:16px}
+.hero-side .hero-stats>div{background:linear-gradient(150deg,rgba(255,255,255,.95),rgba(246,251,249,.85))}
+.modal-card{background:linear-gradient(180deg,#fff 0%,#fbfdfc 100%)}
+.primary-btn,.secondary-btn,.ghost-btn,.catalog-tab,.year-tab,.tab,.hint{cursor:pointer}
+.topbar{backdrop-filter:blur(22px);background:rgba(255,255,255,.9)}
+@media(max-width:1050px){.catalog-toolbar{grid-template-columns:1fr 1fr}.catalog-tabs{grid-column:1/-1}}
+@media(max-width:700px){.catalog-source-note{display:block}.catalog-source-note a{display:inline-block;margin-top:4px}.status-chip{display:none}}
