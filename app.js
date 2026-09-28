@@ -1,30 +1,831 @@
-const SUPABASE_URL="https://snvteuqzstctmqlsgyhr.supabase.co";const SUPABASE_KEY="sb_publishable_0oJW2Ui715WZdqQmVp23TPw_vU4E93ZK";const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],state={q:"",tab:"all",department:"all",year:"all",topic:"all",type:"all",authority:"all",sort:"popular"},cache={resources:[],notes:[],events:[]};
-const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));const compact=n=>new Intl.NumberFormat("tr-TR",{notation:"compact",maximumFractionDigits:1}).format(n||0);
-function toast(m){const e=$("#toast");e.textContent=m;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),2200)}
-function open(m){$(m)?.classList.remove("hidden")}function closeAll(){$$(".modal").forEach(m=>m.classList.add("hidden"))}
-async function getSession(){return (await db.auth.getSession()).data.session}
-async function authUi(){const s=await getSession();$("#authBtn").textContent=s?"Çıkış Yap":"Giriş Yap"}
-function resourceCard(r){const official=r.authority==="official";return '<article class="result-card"><div class="result-top"><span class="source-badge '+(official?"official":"")+'">'+(official?"RESMÎ":"DOĞRULANMIŞ")+'</span><span class="result-kind">'+esc(r.category)+'</span></div><h3>'+esc(r.title)+'</h3><p>'+esc(r.summary)+'</p><div class="source-line"><span>Kaynak:</span><b>'+esc(r.source_name)+'</b><span>·</span><span>'+esc(r.verified_at)+" doğrulandı</span></div><div class="result-foot"><small>"+esc((r.tags||[]).slice(0,3).join(" · "))+'</small><div class="result-actions"><button class="secondary-btn" data-open-resource="'+r.id+'">Kaynağı aç</button></div></div></article>'}
-function noteCard(n){return '<article class="result-card"><div class="result-top"><span class="source-badge community">ÖĞRENCİ KAYNAĞI</span><span class="result-kind">'+esc(n.content_type)+'</span></div><h3>'+esc(n.title)+'</h3><p>'+esc(n.description||"Topluluk tarafından paylaşılan ders kaynağı.")+'</p><div class="source-line"><span>'+esc(n.department)+'</span><span>·</span><span>'+(n.study_year||"-")+". sınıf</span><span>·</span><span>⭐ "+Number(n.rating||0).toFixed(1)+'</span></div><div class="result-foot"><small>⬇ '+compact(n.downloads)+' · ♥ '+compact(n.likes_count)+'</small><div class="result-actions"><button class="ghost-btn" data-note-preview="'+n.id+'">Önizle</button><button class="secondary-btn" data-note-download="'+n.id+'">İndir</button></div></div></article>'}
-function eventCard(e){const d=new Date(e.event_date);const day=d.toLocaleDateString("tr-TR",{day:"2-digit"}),mon=d.toLocaleDateString("tr-TR",{month:"short"});return '<article class="event"><div class="event-date">'+day+'<small>'+mon+'</small></div><div class="event-main"><b>'+esc(e.title)+'</b><small>'+esc(e.organizer)+' · '+esc(e.category)+(e.deadline_date?" · Son tarih "+new Date(e.deadline_date).toLocaleDateString("tr-TR"):"")+'</small></div><a href="'+esc(e.source_url)+'" target="_blank" rel="noopener">Kaynağa git ↗</a></article>'}
-async function loadResources(){let q=db.from("knowledge_resources").select("*");if(state.authority!=="all")q=q.eq("authority",state.authority);if(state.q){const s=state.q.replace(/[%_]/g," ").trim();q=q.or("title.ilike.%"+s+"%,summary.ilike.%"+s+"%,source_name.ilike.%"+s+"%,category.ilike.%"+s+"%")}q=state.sort==="newest"?q.order("verified_at",{ascending:false}):q.order("featured",{ascending:false}).order("verified_at",{ascending:false});const r=await q.limit(50);return r.data||[]}
-async function loadNotes(){let q=db.from("notes").select("*").eq("status","published");if(state.department!=="all")q=q.eq("department",state.department);if(state.year!=="all")q=q.eq("study_year",+state.year);if(state.topic!=="all")q=q.eq("topic",state.topic);if(state.type!=="all")q=q.eq("content_type",state.type);if(state.q){const s=state.q.replace(/[%_]/g," ").trim();q=q.or("title.ilike.%"+s+"%,description.ilike.%"+s+"%,topic.ilike.%"+s+"%,lecturer.ilike.%"+s+"%,university.ilike.%"+s+"%")}q=state.sort==="newest"?q.order("created_at",{ascending:false}):state.sort==="rating"?q.order("rating",{ascending:false}):q.order("downloads",{ascending:false});const r=await q.limit(50);return r.data||[]}
-async function loadEvents(){const r=await db.from("academic_events").select("*").order("event_date",{ascending:true}).limit(12);return r.data||[]}
-async function loadAll(){ $("#resultsLoading").style.display="block";const [resources,notes,events]=await Promise.all([loadResources(),loadNotes(),loadEvents()]);cache.resources=resources;cache.notes=notes;cache.events=events;$("#resultsLoading").style.display="none";render();updateStats();renderEvents();$("#lastSync").textContent="Son veri kontrolü: "+new Date().toLocaleString("tr-TR",{dateStyle:"short",timeStyle:"short"})}
-function render(){let html="";if(state.tab==="all"||state.tab==="resource")html+=cache.resources.map(resourceCard).join("");if(state.tab==="all"||state.tab==="note")html+=cache.notes.map(noteCard).join("");if(state.tab==="event")html+=cache.events.map(eventCard).join("");if(!html)html='<div class="loading" style="grid-column:1/-1">Bu filtrelerle eşleşen kaynak bulunamadı. Başka bir arama deneyin.</div>';$("#resultsGrid").innerHTML=html;$("#resultTitle").textContent=state.q?'"'+state.q+'" için sonuçlar':state.tab==="resource"?"Güvenilir kaynaklar":state.tab==="note"?"Öğrenci notları":state.tab==="event"?"Yaklaşanlar":"Öne çıkan kaynaklar";$("#resultEyebrow").textContent=(cache.resources.length+cache.notes.length+(state.tab==="event"?cache.events.length:0))+" sonuç"}
-function updateStats(){$("#statResources").textContent=compact(cache.resources.length);$("#statNotes").textContent=compact(cache.notes.length);$("#statEvents").textContent=compact(cache.events.length);const a=cache.resources.filter(x=>x.authority==="official").length,b=cache.resources.filter(x=>x.authority==="verified_external").length;$("#officialCount").textContent=a;$("#externalCount").textContent=b;$("#communityCount").textContent=cache.notes.length}
-function renderEvents(){$("#eventsList").innerHTML=cache.events.length?cache.events.slice(0,8).map(eventCard).join(""):'<div class="loading">Yaklaşan etkinlik bulunamadı.</div>'}
-function bind(){[["department","departmentSelect"],["year","yearSelect"],["topic","topicSelect"],["type","typeSelect"],["authority","authoritySelect"]].forEach(([k,id])=>$("#"+id).addEventListener("change",e=>{state[k]=e.target.value;loadAll()}));$("#sortSelect").addEventListener("change",e=>{state.sort=e.target.value;loadAll()});$("#searchForm").addEventListener("submit",e=>{e.preventDefault();state.q=$("#searchInput").value.trim();loadAll()});$$(".hint").forEach(b=>b.onclick=()=>{$("#searchInput").value=b.dataset.query;state.q=b.dataset.query;loadAll()});$$(".tab").forEach(b=>b.onclick=()=>{$$(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");state.tab=b.dataset.tab;loadAll()});$("#resetFilters").onclick=()=>{Object.assign(state,{q:"",department:"all",year:"all",topic:"all",type:"all",authority:"all"});$("#searchInput").value="";["departmentSelect","yearSelect","topicSelect","typeSelect","authoritySelect"].forEach(id=>$("#"+id).value="all");loadAll();toast("Filtreler temizlendi")};$("#resultsGrid").addEventListener("click",async e=>{const rb=e.target.closest("[data-open-resource]");const p=e.target.closest("[data-note-preview]");const d=e.target.closest("[data-note-download]");if(rb){const r=cache.resources.find(x=>x.id===+rb.dataset.openResource);if(r)window.open(r.source_url,"_blank","noopener")}if(p){const n=cache.notes.find(x=>x.id===+p.dataset.notePreview);if(n?.file_path)window.open(SUPABASE_URL+"/storage/v1/object/public/note-files/"+n.file_path,"_blank","noopener");else toast("Bu notta henüz dosya yok.")}if(d)downloadNote(+d.dataset.noteDownload);const l=e.target.closest("[data-note-like]");const s=e.target.closest("[data-note-save]");const r=e.target.closest("[data-note-rate]");if(l)toggleLike(+l.dataset.noteLike);if(s)toggleSave(+s.dataset.noteSave);if(r)rateNote(+r.dataset.noteRate)});["#shareBtn","#shareBtn2"].forEach(id=>$(id).onclick=async()=>{if(await requireUser())open("#shareModal")});$("#authBtn").onclick=async()=>{if(await getSession()){await db.auth.signOut();toast("Çıkış yapıldı.");authUi()}else open("#authModal")};$$("[data-close]").forEach(x=>x.onclick=closeAll);$("#authSwitch").onclick=()=>{const login=$("#authNameWrap").classList.contains("hidden");$("#authNameWrap").classList.toggle("hidden",!login);$("#authTitle").textContent=login?"Hesap oluştur":"Giriş yap";$("#authSubmit").textContent=login?"Kayıt Ol":"Giriş Yap";$("#authSwitch").textContent=login?"Zaten hesabın var mı? Giriş yap":"Hesabın yok mu? Kayıt ol"});$("#authForm").onsubmit=submitAuth;$("#shareForm").onsubmit=shareNote;$("#reportBtn").onclick=()=>toast("Raporlama formu sonraki yönetim sürümünde açılacak.");$("#addCourse").onclick=addCourseRow;$("#gpaRows").addEventListener("input",calcGpa);$("#gpaRows").addEventListener("change",calcGpa);$("#gpaRows").addEventListener("click",e=>{if(e.target.matches(".remove")){e.target.parentElement.remove();calcGpa()}});$("#startTimer").onclick=toggleTimer;$("#resetTimer").onclick=resetTimer;$("#taskForm").onsubmit=addTask;$("#tasks").addEventListener("click",e=>{const t=e.target.closest(".task");if(!t)return;if(e.target.dataset.remove!==undefined){removeTask(e.target.dataset.remove)}else toggleTask(t.dataset.id)});document.addEventListener("keydown",e=>{if(e.key==="/"&&!["INPUT","TEXTAREA"].includes(document.activeElement.tagName)){e.preventDefault();$("#searchInput").focus()}if(e.key==="Escape")closeAll()})}
-async function requireUser(){const s=await getSession();if(s)return s.user;open("#authModal");toast("Bu işlem için giriş yapmalısın.");return null}
-async function submitAuth(e){e.preventDefault();const email=$("#authEmail").value.trim(),password=$("#authPassword").value,name=$("#authName").value.trim();const signup=!$("#authNameWrap").classList.contains("hidden");const r=signup?await db.auth.signUp({email,password,options:{data:{display_name:name||"Öğrenci"}}}):await db.auth.signInWithPassword({email,password});if(r.error){toast(r.error.message);return}closeAll();toast(signup?"Kayıt başarılı. E-postanı doğrulaman gerekebilir.":"Giriş başarılı.");authUi()}
-async function shareNote(e){e.preventDefault();const u=await requireUser();if(!u)return;const f=new FormData(e.currentTarget),file=f.get("file");const path=u.id+"/"+crypto.randomUUID()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");let r=await db.storage.from("note-files").upload(path,file);if(r.error){toast("Dosya yüklenemedi.");return}r=await db.from("notes").insert({title:f.get("title"),department:f.get("department"),study_year:+f.get("study_year"),topic:f.get("topic")||null,content_type:f.get("content_type"),university:f.get("university")||null,description:f.get("description")||null,file_path:path,file_name:file.name,file_size:file.size,uploader_id:u.id,status:"published"});if(r.error){await db.storage.from("note-files").remove([path]);toast("Not kaydedilemedi.");return}closeAll();e.currentTarget.reset();toast("Kaynak yayınlandı.");loadAll()}
-async function downloadNote(id){const n=cache.notes.find(x=>x.id===id);if(!n?.file_path){toast("Dosya bulunamadı.");return}const r=await db.storage.from("note-files").download(n.file_path);if(r.error){toast("İndirme başarısız.");return}const url=URL.createObjectURL(r.data),a=document.createElement("a");a.href=url;a.download=n.file_name||"not";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);await db.rpc("increment_downloads",{note_id:id});n.downloads=(n.downloads||0)+1;updateStats();toast("İndirme başlatıldı.")}
-async function toggleLike(id){const u=await requireUser();if(!u)return;const existing=await db.from("note_likes").select("note_id").eq("note_id",id).eq("user_id",u.id).maybeSingle();if(existing.data){await db.from("note_likes").delete().eq("note_id",id).eq("user_id",u.id);toast("Beğeni kaldırıldı.")}else{await db.from("note_likes").insert({note_id:id,user_id:u.id});toast("Notu beğendin.")}loadAll()}
-async function toggleSave(id){const u=await requireUser();if(!u)return;const existing=await db.from("bookmarks").select("note_id").eq("note_id",id).eq("user_id",u.id).maybeSingle();if(existing.data){await db.from("bookmarks").delete().eq("note_id",id).eq("user_id",u.id);toast("Kaydedilenlerden çıkarıldı.")}else{await db.from("bookmarks").insert({note_id:id,user_id:u.id});toast("Not kaydedildi.")}}
-async function rateNote(id){const u=await requireUser();if(!u)return;const value=Number(prompt("1–5 arasında puan ver:","5"));if(!Number.isInteger(value)||value<1||value>5){toast("Puan 1 ile 5 arasında olmalı.");return}const r=await db.from("note_ratings").upsert({note_id:id,user_id:u.id,rating:value,updated_at:new Date().toISOString()},{onConflict:"note_id,user_id"});if(r.error){toast("Puan kaydedilemedi.");return}toast("Puanın kaydedildi.");loadAll()}
-function addCourseRow(){const id=crypto.randomUUID();$("#gpaRows").insertAdjacentHTML("beforeend",'<div class="gpa-row" data-id="'+id+'"><input placeholder="Ders" aria-label="Ders"><input type="number" min="1" max="10" value="3" step="1" aria-label="Kredi"><select aria-label="Not"><option value="4">AA</option><option value="3.5">BA</option><option value="3">BB</option><option value="2.5">CB</option><option value="2">CC</option><option value="1.5">DC</option><option value="1">DD</option><option value="0">FF</option></select><button class="remove" title="Sil">×</button></div>');calcGpa()}
-function calcGpa(){let p=0,c=0;$$(".gpa-row").forEach(r=>{const credit=+(r.querySelector("input[type=number]")?.value||0),grade=+(r.querySelector("select")?.value||0);p+=credit*grade;c+=credit});$("#gpaResult").textContent=c?(p/c).toFixed(2)+" / 4.00":"—"}
-let timerSecs=1500,timerRunning=false,timerId=null;function renderTimer(){$("#timer").textContent=String(Math.floor(timerSecs/60)).padStart(2,"0")+":"+String(timerSecs%60).padStart(2,"0")}function toggleTimer(){timerRunning=!timerRunning;$("#startTimer").textContent=timerRunning?"Duraklat":"Başlat";if(timerRunning)timerId=setInterval(()=>{timerSecs=Math.max(0,timerSecs-1);renderTimer();if(!timerSecs){clearInterval(timerId);timerRunning=false;$("#startTimer").textContent="Başlat";toast("25 dakika tamamlandı.")}},1000);else clearInterval(timerId)}function resetTimer(){clearInterval(timerId);timerRunning=false;timerSecs=1500;$("#startTimer").textContent="Başlat";renderTimer()}
-const taskKey="notora_tasks";function tasks(){try{return JSON.parse(localStorage.getItem(taskKey)||"[]")}catch{return[]}}function saveTasks(v){localStorage.setItem(taskKey,JSON.stringify(v))}function renderTasks(){const v=tasks();$("#tasks").innerHTML=v.map(t=>'<div class="task '+(t.done?"done":"")+'" data-id="'+t.id+'"><span>✓</span><span>'+esc(t.text)+'</span><button data-remove="'+t.id+'">×</button></div>').join("")}function addTask(e){e.preventDefault();const input=$("#taskInput"),textv=input.value.trim();if(!textv)return;const v=tasks();if(v.length>=5){toast("Önce tamamladığın bir işi temizle.");return}v.push({id:crypto.randomUUID(),text:textv,done:false});saveTasks(v);input.value="";renderTasks()}function toggleTask(id){const v=tasks().map(t=>t.id===id?{...t,done:!t.done}:t);saveTasks(v);renderTasks()}function removeTask(id){saveTasks(tasks().filter(t=>t.id!==id));renderTasks()}
-addCourseRow();renderTasks();renderTimer();bind();authUi();loadAll();
+const SUPABASE_URL = "https://snvteuqzstctmqlsgyhr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_0oJW2Ui715WZdqQmVp23TPw_vU4E93ZK";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];
+
+const state = {
+  q: "",
+  tab: "all",
+  department: "all",
+  year: "all",
+  topic: "all",
+  type: "all",
+  authority: "all",
+  sort: "popular",
+};
+
+const cache = {
+  resources: [],
+  notes: [],
+  events: [],
+};
+
+const escapeHtml = (value) =>
+  String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  }[char]));
+
+const compact = (value) =>
+  new Intl.NumberFormat("tr-TR", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value || 0);
+
+function showToast(message) {
+  const element = $("#toast");
+  if (!element) return;
+  element.textContent = message;
+  element.classList.add("show");
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => element.classList.remove("show"), 2200);
+}
+
+function openModal(selector) {
+  $(selector)?.classList.remove("hidden");
+}
+
+function closeModals() {
+  $$(".modal").forEach((modal) => modal.classList.add("hidden"));
+}
+
+async function getSession() {
+  return (await db.auth.getSession()).data.session;
+}
+
+async function refreshAuthUi() {
+  const session = await getSession();
+  $("#authBtn").textContent = session ? "Çıkış Yap" : "Giriş Yap";
+}
+
+function resourceCard(resource) {
+  const isOfficial = resource.authority === "official";
+  return `
+    <article class="result-card">
+      <div class="result-top">
+        <span class="source-badge ${isOfficial ? "official" : ""}">
+          ${isOfficial ? "RESMÎ KAYNAK" : "DOĞRULANMIŞ DIŞ"}
+        </span>
+        <span class="result-kind">${escapeHtml(resource.category)}</span>
+      </div>
+      <h3>${escapeHtml(resource.title)}</h3>
+      <p>${escapeHtml(resource.summary)}</p>
+      <div class="source-line">
+        <span>Kaynak:</span>
+        <b>${escapeHtml(resource.source_name)}</b>
+        <span>·</span>
+        <span>${escapeHtml(resource.verified_at)} doğrulandı</span>
+      </div>
+      <div class="result-foot">
+        <small>${escapeHtml((resource.tags || []).slice(0, 3).join(" · "))}</small>
+        <div class="result-actions">
+          <button class="secondary-btn" data-open-resource="${resource.id}">Kaynağı aç ↗</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function noteCard(note) {
+  return `
+    <article class="result-card">
+      <div class="result-top">
+        <span class="source-badge community">ÖĞRENCİ KAYNAĞI</span>
+        <span class="result-kind">${escapeHtml(note.content_type)}</span>
+      </div>
+      <h3>${escapeHtml(note.title)}</h3>
+      <p>${escapeHtml(note.description || "Topluluk tarafından paylaşılan ders kaynağı.")}</p>
+      <div class="source-line">
+        <span>${escapeHtml(note.department)}</span>
+        <span>·</span>
+        <span>${note.study_year || "-"}. sınıf</span>
+        <span>·</span>
+        <span>⭐ ${Number(note.rating || 0).toFixed(1)}</span>
+      </div>
+      <div class="result-foot">
+        <small>⬇ ${compact(note.downloads)} · ♥ ${compact(note.likes_count)}</small>
+        <div class="result-actions">
+          <button class="ghost-btn" data-note-preview="${note.id}">Önizle</button>
+          <button class="ghost-btn" data-note-like="${note.id}">♥</button>
+          <button class="ghost-btn" data-note-save="${note.id}">☆</button>
+          <button class="ghost-btn" data-note-rate="${note.id}">Puanla</button>
+          <button class="secondary-btn" data-note-download="${note.id}">İndir</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function eventCard(event) {
+  const date = new Date(event.event_date);
+  return `
+    <article class="event">
+      <div class="event-date">
+        ${date.toLocaleDateString("tr-TR", { day: "2-digit" })}
+        <small>${date.toLocaleDateString("tr-TR", { month: "short" })}</small>
+      </div>
+      <div class="event-main">
+        <b>${escapeHtml(event.title)}</b>
+        <small>
+          ${escapeHtml(event.organizer)} · ${escapeHtml(event.category)}
+          ${event.deadline_date ? " · Son tarih " + new Date(event.deadline_date).toLocaleDateString("tr-TR") : ""}
+        </small>
+      </div>
+      <a href="${escapeHtml(event.source_url)}" target="_blank" rel="noopener">Kaynağa git ↗</a>
+    </article>
+  `;
+}
+
+async function fetchResources() {
+  let query = db.from("knowledge_resources").select("*");
+
+  if (state.authority !== "all") {
+    query = query.eq("authority", state.authority);
+  }
+
+  if (state.q) {
+    const term = state.q.replace(/[%_]/g, " ").trim();
+    query = query.or(
+      `title.ilike.%${term}%,summary.ilike.%${term}%,source_name.ilike.%${term}%,category.ilike.%${term}%`
+    );
+  }
+
+  query =
+    state.sort === "newest"
+      ? query.order("verified_at", { ascending: false })
+      : query.order("featured", { ascending: false }).order("verified_at", { ascending: false });
+
+  const { data, error } = await query.limit(60);
+  if (error) throw error;
+  return data || [];
+}
+
+async function fetchNotes() {
+  let query = db.from("notes").select("*").eq("status", "published");
+
+  if (state.department !== "all") query = query.eq("department", state.department);
+  if (state.year !== "all") query = query.eq("study_year", Number(state.year));
+  if (state.topic !== "all") query = query.eq("topic", state.topic);
+  if (state.type !== "all") query = query.eq("content_type", state.type);
+
+  if (state.q) {
+    const term = state.q.replace(/[%_]/g, " ").trim();
+    query = query.or(
+      `title.ilike.%${term}%,description.ilike.%${term}%,topic.ilike.%${term}%,lecturer.ilike.%${term}%,university.ilike.%${term}%`
+    );
+  }
+
+  query =
+    state.sort === "newest"
+      ? query.order("created_at", { ascending: false })
+      : state.sort === "rating"
+        ? query.order("rating", { ascending: false })
+        : query.order("downloads", { ascending: false });
+
+  const { data, error } = await query.limit(60);
+  if (error) throw error;
+  return data || [];
+}
+
+async function fetchEvents() {
+  const { data, error } = await db
+    .from("academic_events")
+    .select("*")
+    .order("event_date", { ascending: true })
+    .limit(16);
+
+  if (error) throw error;
+  return data || [];
+}
+
+async function loadAll() {
+  $("#resultsLoading").style.display = "block";
+
+  try {
+    const [resources, notes, events] = await Promise.all([
+      fetchResources(),
+      fetchNotes(),
+      fetchEvents(),
+    ]);
+
+    cache.resources = resources;
+    cache.notes = notes;
+    cache.events = events;
+
+    renderResults();
+    renderEvents();
+    updateStats();
+
+    $("#resultsLoading").style.display = "none";
+    $("#lastSync").textContent =
+      "Son veri kontrolü: " +
+      new Date().toLocaleString("tr-TR", {
+        dateStyle: "short",
+        timeStyle: "short",
+      });
+  } catch (error) {
+    console.error(error);
+    $("#resultsLoading").style.display = "none";
+    $("#resultsGrid").innerHTML =
+      '<div class="loading" style="grid-column:1/-1">Kaynaklar yüklenemedi. Bağlantını kontrol edip tekrar dene.</div>';
+    showToast("Veri yüklenirken bir hata oluştu.");
+  }
+}
+
+function renderResults() {
+  let markup = "";
+
+  if (state.tab === "all" || state.tab === "resource") {
+    markup += cache.resources.map(resourceCard).join("");
+  }
+
+  if (state.tab === "all" || state.tab === "note") {
+    markup += cache.notes.map(noteCard).join("");
+  }
+
+  if (state.tab === "event") {
+    markup += cache.events.map(eventCard).join("");
+  }
+
+  if (!markup) {
+    markup =
+      '<div class="loading" style="grid-column:1/-1">Bu arama ve filtrelerle eşleşen kaynak bulunamadı.</div>';
+  }
+
+  $("#resultsGrid").innerHTML = markup;
+
+  const titles = {
+    all: "Öne çıkan kaynaklar",
+    resource: "Güvenilir kaynaklar",
+    note: "Öğrenci notları",
+    event: "Yaklaşanlar",
+  };
+
+  $("#resultTitle").textContent =
+    state.q ? `"${state.q}" için sonuçlar` : titles[state.tab];
+  $("#resultEyebrow").textContent =
+    state.tab === "event"
+      ? `${cache.events.length} kayıt`
+      : `${cache.resources.length + cache.notes.length} sonuç`;
+}
+
+function updateStats() {
+  $("#statResources").textContent = compact(cache.resources.length);
+  $("#statNotes").textContent = compact(cache.notes.length);
+  $("#statEvents").textContent = compact(cache.events.length);
+
+  $("#officialCount").textContent =
+    cache.resources.filter((item) => item.authority === "official").length;
+  $("#externalCount").textContent =
+    cache.resources.filter((item) => item.authority === "verified_external").length;
+  $("#communityCount").textContent = cache.notes.length;
+}
+
+function renderEvents() {
+  $("#eventsList").innerHTML = cache.events.length
+    ? cache.events.slice(0, 8).map(eventCard).join("")
+    : '<div class="loading">Yaklaşan kayıt bulunamadı.</div>';
+}
+
+async function requireUser() {
+  const session = await getSession();
+  if (session) return session.user;
+
+  openModal("#authModal");
+  showToast("Bu işlem için giriş yapmalısın.");
+  return null;
+}
+
+async function submitAuth(event) {
+  event.preventDefault();
+
+  const email = $("#authEmail").value.trim();
+  const password = $("#authPassword").value;
+  const displayName = $("#authName").value.trim();
+  const signup = !$("#authNameWrap").classList.contains("hidden");
+
+  const response = signup
+    ? await db.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { display_name: displayName || "Öğrenci" },
+        },
+      })
+    : await db.auth.signInWithPassword({ email, password });
+
+  if (response.error) {
+    showToast(response.error.message);
+    return;
+  }
+
+  closeModals();
+  showToast(signup ? "Kayıt başarılı. E-postanı doğrulaman gerekebilir." : "Giriş başarılı.");
+  await refreshAuthUi();
+}
+
+async function shareNote(event) {
+  event.preventDefault();
+
+  const user = await requireUser();
+  if (!user) return;
+
+  const form = new FormData(event.currentTarget);
+  const file = form.get("file");
+
+  if (!(file instanceof File) || !file.size) {
+    showToast("Bir dosya seçmelisin.");
+    return;
+  }
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${user.id}/${crypto.randomUUID()}-${safeName}`;
+
+  const upload = await db.storage.from("note-files").upload(path, file);
+  if (upload.error) {
+    showToast("Dosya yüklenemedi.");
+    return;
+  }
+
+  const insert = await db.from("notes").insert({
+    title: form.get("title"),
+    department: form.get("department"),
+    study_year: Number(form.get("study_year")),
+    topic: form.get("topic") || null,
+    content_type: form.get("content_type"),
+    university: form.get("university") || null,
+    description: form.get("description") || null,
+    file_path: path,
+    file_name: file.name,
+    file_size: file.size,
+    uploader_id: user.id,
+    status: "published",
+  });
+
+  if (insert.error) {
+    await db.storage.from("note-files").remove([path]);
+    showToast("Not kaydedilemedi.");
+    return;
+  }
+
+  closeModals();
+  event.currentTarget.reset();
+  showToast("Kaynak yayınlandı.");
+  await loadAll();
+}
+
+async function downloadNote(id) {
+  const note = cache.notes.find((item) => item.id === id);
+
+  if (!note?.file_path) {
+    showToast("Bu kaynağın dosyası henüz yok.");
+    return;
+  }
+
+  const download = await db.storage.from("note-files").download(note.file_path);
+  if (download.error) {
+    showToast("İndirme başarısız.");
+    return;
+  }
+
+  const url = URL.createObjectURL(download.data);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = note.file_name || "not";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  let token = localStorage.getItem("notora_download_token");
+  if (!token) {
+    token = crypto.randomUUID();
+    localStorage.setItem("notora_download_token", token);
+  }
+
+  const session = await getSession();
+  const eventKey = `${token}-${id}`;
+
+  await db.from("note_download_events").upsert(
+    {
+      note_id: id,
+      user_id: session?.user?.id || null,
+      client_token: eventKey,
+    },
+    { onConflict: "note_id,client_token", ignoreDuplicates: true }
+  );
+
+  note.downloads = (note.downloads || 0) + 1;
+  updateStats();
+  showToast("İndirme başlatıldı.");
+}
+
+async function toggleLike(id) {
+  const user = await requireUser();
+  if (!user) return;
+
+  const { data: existing } = await db
+    .from("note_likes")
+    .select("note_id")
+    .eq("note_id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existing) {
+    await db.from("note_likes").delete().eq("note_id", id).eq("user_id", user.id);
+    showToast("Beğeni kaldırıldı.");
+  } else {
+    await db.from("note_likes").insert({ note_id: id, user_id: user.id });
+    showToast("Notu beğendin.");
+  }
+
+  await loadAll();
+}
+
+async function toggleSave(id) {
+  const user = await requireUser();
+  if (!user) return;
+
+  const { data: existing } = await db
+    .from("bookmarks")
+    .select("note_id")
+    .eq("note_id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existing) {
+    await db.from("bookmarks").delete().eq("note_id", id).eq("user_id", user.id);
+    showToast("Kaydedilenlerden çıkarıldı.");
+  } else {
+    await db.from("bookmarks").insert({ note_id: id, user_id: user.id });
+    showToast("Not kaydedildi.");
+  }
+}
+
+async function rateNote(id) {
+  const user = await requireUser();
+  if (!user) return;
+
+  const value = Number(window.prompt("1–5 arasında puan ver:", "5"));
+
+  if (!Number.isInteger(value) || value < 1 || value > 5) {
+    showToast("Puan 1 ile 5 arasında olmalı.");
+    return;
+  }
+
+  const response = await db.from("note_ratings").upsert(
+    {
+      note_id: id,
+      user_id: user.id,
+      rating: value,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "note_id,user_id" }
+  );
+
+  if (response.error) {
+    showToast("Puan kaydedilemedi.");
+    return;
+  }
+
+  showToast("Puanın kaydedildi.");
+  await loadAll();
+}
+
+function addCourseRow() {
+  const id = crypto.randomUUID();
+
+  $("#gpaRows").insertAdjacentHTML(
+    "beforeend",
+    `
+      <div class="gpa-row" data-id="${id}">
+        <input placeholder="Ders" aria-label="Ders adı">
+        <input type="number" min="1" max="10" value="3" step="1" aria-label="Kredi">
+        <select aria-label="Not">
+          <option value="4">AA</option>
+          <option value="3.5">BA</option>
+          <option value="3">BB</option>
+          <option value="2.5">CB</option>
+          <option value="2">CC</option>
+          <option value="1.5">DC</option>
+          <option value="1">DD</option>
+          <option value="0">FF</option>
+        </select>
+        <button class="remove" type="button" aria-label="Dersi sil">×</button>
+      </div>
+    `
+  );
+
+  calculateGpa();
+}
+
+function calculateGpa() {
+  let totalPoints = 0;
+  let totalCredits = 0;
+
+  $$(".gpa-row").forEach((row) => {
+    const credit = Number(row.querySelector('input[type="number"]')?.value || 0);
+    const grade = Number(row.querySelector("select")?.value || 0);
+    totalPoints += credit * grade;
+    totalCredits += credit;
+  });
+
+  $("#gpaResult").textContent = totalCredits
+    ? `${(totalPoints / totalCredits).toFixed(2)} / 4.00`
+    : "—";
+}
+
+let timerSeconds = 25 * 60;
+let timerRunning = false;
+let timerId = null;
+
+function renderTimer() {
+  $("#timer").textContent =
+    String(Math.floor(timerSeconds / 60)).padStart(2, "0") +
+    ":" +
+    String(timerSeconds % 60).padStart(2, "0");
+}
+
+function toggleTimer() {
+  timerRunning = !timerRunning;
+  $("#startTimer").textContent = timerRunning ? "Duraklat" : "Başlat";
+
+  if (timerRunning) {
+    timerId = window.setInterval(() => {
+      timerSeconds = Math.max(timerSeconds - 1, 0);
+      renderTimer();
+
+      if (timerSeconds === 0) {
+        clearInterval(timerId);
+        timerRunning = false;
+        $("#startTimer").textContent = "Başlat";
+        showToast("25 dakikalık odak tamamlandı.");
+      }
+    }, 1000);
+  } else {
+    clearInterval(timerId);
+  }
+}
+
+function resetTimer() {
+  clearInterval(timerId);
+  timerRunning = false;
+  timerSeconds = 25 * 60;
+  $("#startTimer").textContent = "Başlat";
+  renderTimer();
+}
+
+const taskStorageKey = "notora_tasks";
+
+function readTasks() {
+  try {
+    return JSON.parse(localStorage.getItem(taskStorageKey) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function writeTasks(tasks) {
+  localStorage.setItem(taskStorageKey, JSON.stringify(tasks));
+}
+
+function renderTasks() {
+  const tasks = readTasks();
+
+  $("#tasks").innerHTML = tasks
+    .map(
+      (task) => `
+        <div class="task ${task.done ? "done" : ""}" data-id="${task.id}">
+          <span>✓</span>
+          <span>${escapeHtml(task.text)}</span>
+          <button type="button" data-remove-task="${task.id}" aria-label="Görevi sil">×</button>
+        </div>
+      `
+    )
+    .join("");
+}
+
+function addTask(event) {
+  event.preventDefault();
+
+  const input = $("#taskInput");
+  const text = input.value.trim();
+  if (!text) return;
+
+  const tasks = readTasks();
+  if (tasks.length >= 5) {
+    showToast("En fazla 5 aktif görev tutabilirsin.");
+    return;
+  }
+
+  tasks.push({
+    id: crypto.randomUUID(),
+    text,
+    done: false,
+  });
+
+  writeTasks(tasks);
+  input.value = "";
+  renderTasks();
+}
+
+function toggleTask(id) {
+  writeTasks(
+    readTasks().map((task) =>
+      task.id === id ? { ...task, done: !task.done } : task
+    )
+  );
+  renderTasks();
+}
+
+function removeTask(id) {
+  writeTasks(readTasks().filter((task) => task.id !== id));
+  renderTasks();
+}
+
+function bindEvents() {
+  [
+    ["department", "departmentSelect"],
+    ["year", "yearSelect"],
+    ["topic", "topicSelect"],
+    ["type", "typeSelect"],
+    ["authority", "authoritySelect"],
+  ].forEach(([key, id]) => {
+    $("#" + id).addEventListener("change", (event) => {
+      state[key] = event.target.value;
+      loadAll();
+    });
+  });
+
+  $("#sortSelect").addEventListener("change", (event) => {
+    state.sort = event.target.value;
+    loadAll();
+  });
+
+  $("#searchForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    state.q = $("#searchInput").value.trim();
+    loadAll();
+  });
+
+  $$(".hint").forEach((button) => {
+    button.addEventListener("click", () => {
+      $("#searchInput").value = button.dataset.query;
+      state.q = button.dataset.query;
+      loadAll();
+    });
+  });
+
+  $$(".tab").forEach((button) => {
+    button.addEventListener("click", () => {
+      $$(".tab").forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      state.tab = button.dataset.tab;
+      loadAll();
+    });
+  });
+
+  $("#resetFilters").addEventListener("click", () => {
+    Object.assign(state, {
+      q: "",
+      department: "all",
+      year: "all",
+      topic: "all",
+      type: "all",
+      authority: "all",
+      sort: "popular",
+    });
+
+    $("#searchInput").value = "";
+    ["departmentSelect", "yearSelect", "topicSelect", "typeSelect", "authoritySelect", "sortSelect"]
+      .forEach((id) => ($("#" + id).value = id === "sortSelect" ? "popular" : "all"));
+
+    loadAll();
+    showToast("Filtreler temizlendi.");
+  });
+
+  $("#resultsGrid").addEventListener("click", (event) => {
+    const resourceButton = event.target.closest("[data-open-resource]");
+    const previewButton = event.target.closest("[data-note-preview]");
+    const downloadButton = event.target.closest("[data-note-download]");
+    const likeButton = event.target.closest("[data-note-like]");
+    const saveButton = event.target.closest("[data-note-save]");
+    const rateButton = event.target.closest("[data-note-rate]");
+
+    if (resourceButton) {
+      const resource = cache.resources.find(
+        (item) => item.id === Number(resourceButton.dataset.openResource)
+      );
+      if (resource) window.open(resource.source_url, "_blank", "noopener");
+    }
+
+    if (previewButton) {
+      const note = cache.notes.find(
+        (item) => item.id === Number(previewButton.dataset.notePreview)
+      );
+      if (note?.file_path) {
+        window.open(
+          SUPABASE_URL + "/storage/v1/object/public/note-files/" + note.file_path,
+          "_blank",
+          "noopener"
+        );
+      } else {
+        showToast("Bu notta henüz dosya yok.");
+      }
+    }
+
+    if (downloadButton) downloadNote(Number(downloadButton.dataset.noteDownload));
+    if (likeButton) toggleLike(Number(likeButton.dataset.noteLike));
+    if (saveButton) toggleSave(Number(saveButton.dataset.noteSave));
+    if (rateButton) rateNote(Number(rateButton.dataset.noteRate));
+  });
+
+  ["#shareBtn", "#shareBtn2"].forEach((selector) => {
+    $(selector).addEventListener("click", async () => {
+      if (await requireUser()) openModal("#shareModal");
+    });
+  });
+
+  $("#authBtn").addEventListener("click", async () => {
+    if (await getSession()) {
+      await db.auth.signOut();
+      showToast("Çıkış yapıldı.");
+      refreshAuthUi();
+      return;
+    }
+
+    openModal("#authModal");
+  });
+
+  $$(".modal [data-close]").forEach((button) => {
+    button.addEventListener("click", closeModals);
+  });
+
+  $("#authSwitch").addEventListener("click", () => {
+    const isLogin = $("#authNameWrap").classList.contains("hidden");
+    $("#authNameWrap").classList.toggle("hidden", !isLogin);
+    $("#authTitle").textContent = isLogin ? "Hesap oluştur" : "Giriş yap";
+    $("#authSubmit").textContent = isLogin ? "Kayıt Ol" : "Giriş Yap";
+    $("#authSwitch").textContent = isLogin
+      ? "Zaten hesabın var mı? Giriş yap"
+      : "Hesabın yok mu? Kayıt ol";
+  });
+
+  $("#authForm").addEventListener("submit", submitAuth);
+  $("#shareForm").addEventListener("submit", shareNote);
+
+  $("#reportBtn").addEventListener("click", () => {
+    showToast("Kaynak raporlama modülü yönetim paneline bağlanacak.");
+  });
+
+  $("#addCourse").addEventListener("click", addCourseRow);
+  $("#gpaRows").addEventListener("input", calculateGpa);
+  $("#gpaRows").addEventListener("change", calculateGpa);
+  $("#gpaRows").addEventListener("click", (event) => {
+    if (event.target.matches(".remove")) {
+      event.target.closest(".gpa-row")?.remove();
+      calculateGpa();
+    }
+  });
+
+  $("#startTimer").addEventListener("click", toggleTimer);
+  $("#resetTimer").addEventListener("click", resetTimer);
+  $("#taskForm").addEventListener("submit", addTask);
+
+  $("#tasks").addEventListener("click", (event) => {
+    const removeButton = event.target.closest("[data-remove-task]");
+    if (removeButton) {
+      removeTask(removeButton.dataset.removeTask);
+      return;
+    }
+
+    const task = event.target.closest(".task");
+    if (task) toggleTask(task.dataset.id);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (
+      event.key === "/" &&
+      !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)
+    ) {
+      event.preventDefault();
+      $("#searchInput").focus();
+    }
+
+    if (event.key === "Escape") closeModals();
+  });
+
+  db.auth.onAuthStateChange(() => refreshAuthUi());
+}
+
+addCourseRow();
+renderTasks();
+renderTimer();
+bindEvents();
+refreshAuthUi();
+loadAll();
