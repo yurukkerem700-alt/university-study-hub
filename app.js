@@ -20,6 +20,7 @@ const cache = {
   resources: [],
   notes: [],
   events: [],
+  catalog: [],
 };
 
 const escapeHtml = (value) =>
@@ -192,6 +193,48 @@ async function fetchNotes() {
   return data || [];
 }
 
+
+async function fetchCatalogMatches() {
+  if (!state.q) return [];
+
+  const term = state.q.replace(/[%_]/g, " ").trim();
+  if (!term) return [];
+
+  const { data, error } = await db
+    .from("study_catalog")
+    .select("*")
+    .or(
+      `subject.ilike.%${term}%,topic.ilike.%${term}%,skill.ilike.%${term}%,domain.ilike.%${term}%`
+    )
+    .order("year_level", { ascending: true })
+    .limit(10);
+
+  if (error) throw error;
+  return data || [];
+}
+
+function catalogCard(item) {
+  return `
+    <article class="result-card catalog-result">
+      <div class="result-top">
+        <span class="source-badge official">DERS HARİTASI</span>
+        <span class="result-kind">${escapeHtml(item.domain)} · ${item.year_level}. sınıf</span>
+      </div>
+      <h3>${escapeHtml(item.subject)} — ${escapeHtml(item.topic)}</h3>
+      <p>${escapeHtml(item.skill || "Konunun temel kavramlarını ve uygulamasını çalış.")}</p>
+      <div class="source-line">
+        <span>${item.semester}. dönem</span><span>·</span><span>${escapeHtml(item.level)}</span>
+      </div>
+      <div class="result-foot">
+        <small>Genel akademik yol haritası</small>
+        <div class="result-actions">
+          <button class="secondary-btn" data-open-roadmap data-domain="${escapeHtml(item.domain)}" data-year="${item.year_level}">Haritayı aç</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
 async function fetchEvents() {
   const { data, error } = await db
     .from("academic_events")
@@ -207,15 +250,17 @@ async function loadAll() {
   $("#resultsLoading").style.display = "block";
 
   try {
-    const [resources, notes, events] = await Promise.all([
+    const [resources, notes, events, catalog] = await Promise.all([
       fetchResources(),
       fetchNotes(),
       fetchEvents(),
+      fetchCatalogMatches(),
     ]);
 
     cache.resources = resources;
     cache.notes = notes;
     cache.events = events;
+    cache.catalog = catalog;
 
     renderResults();
     renderEvents();
@@ -250,6 +295,10 @@ function renderResults() {
 
   if (state.tab === "event") {
     markup += cache.events.map(eventCard).join("");
+  }
+
+  if (state.q && state.tab === "all") {
+    markup += cache.catalog.map(catalogCard).join("");
   }
 
   if (!markup) {
@@ -800,6 +849,7 @@ function bindEvents() {
     const likeButton = event.target.closest("[data-note-like]");
     const saveButton = event.target.closest("[data-note-save]");
     const rateButton = event.target.closest("[data-note-rate]");
+    const roadmapButton = event.target.closest("[data-open-roadmap]");
 
     if (resourceButton) {
       const resource = cache.resources.find(
@@ -827,6 +877,12 @@ function bindEvents() {
     if (likeButton) toggleLike(Number(likeButton.dataset.noteLike));
     if (saveButton) toggleSave(Number(saveButton.dataset.noteSave));
     if (rateButton) rateNote(Number(rateButton.dataset.noteRate));
+    if (roadmapButton) {
+      $("#roadmapDomain").value = roadmapButton.dataset.domain;
+      $(".year-tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.year === roadmapButton.dataset.year));
+      document.querySelector("#roadmap")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      renderRoadmap();
+    }
   });
 
   ["#shareBtn", "#shareBtn2"].forEach((selector) => {
