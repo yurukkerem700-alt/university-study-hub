@@ -1,5 +1,6 @@
 const SUPABASE_URL = "https://snvteuqzstctmqlsgyhr.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_0oJW2Ui715WZdqQmVp23TPw_vU4E93ZK";
+// Supabase browser key: legacy anon key is currently the compatible public Data API/Auth key for this project.
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudnRldXF6c3RjdG1xbHNneWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNjk1ODAsImV4cCI6MjEwNTY0NTU4MH0.cd6s5mWpaepkE2vlZWiEeMJLU_n3vQx6YBnHJRD2boI";
 const APP_VERSION = "5";
 const CATALOG_SOURCE_YEAR = 2025;
 
