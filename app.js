@@ -3,6 +3,7 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_0oJW2Ui715WZdqQmVp23TPw_vU4E93Z
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudnRldXF6c3RjdG1xbHNneWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNjk1ODAsImV4cCI6MjEwNTY0NTU4MH0.cd6s5mWpaepK2vlZWiEeMJLU_n3vQx6YBnHJRD2boI";
 let db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 let usingLegacyKey = false;
+let authSubscription = null;
 
 async function initializeSupabase() {
   const probe = await db.from("knowledge_resources").select("id").limit(1);
@@ -978,7 +979,6 @@ function bindEvents() {
     if (event.key === "Escape") closeModals();
   });
 
-  db.auth.onAuthStateChange(() => refreshAuthUi());
 }
 
 addCourseRow();
@@ -986,6 +986,8 @@ renderTasks();
 renderTimer();
 bindEvents();
 initializeSupabase().then(async () => {
+  authSubscription?.unsubscribe?.();
+  authSubscription = db.auth.onAuthStateChange(() => refreshAuthUi());
   await refreshAuthUi();
   await loadAll();
   await renderRoadmap();
