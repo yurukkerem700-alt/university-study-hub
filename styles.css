@@ -881,3 +881,6 @@ img {
   }
 }
 
+
+/* Notora production polish */
+:focus-visible{outline:3px solid rgba(28,140,133,.35);outline-offset:3px}.empty-state{text-align:center;padding:40px}.auth-hint{color:var(--muted);font-size:.85rem;line-height:1.6}.modal-card.wide{width:min(94vw,680px)}.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.upload-grid label{display:grid;gap:6px}.upload-grid input,.upload-grid select,.upload-grid textarea{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fbfcfb}.upload-grid .full{grid-column:1/-1}@media(max-width:600px){.upload-grid{grid-template-columns:1fr}.upload-grid .full{grid-column:auto}}
