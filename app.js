@@ -1,5 +1,7 @@
 const SUPABASE_URL = "https://snvteuqzstctmqlsgyhr.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_0oJW2Ui715WZdqQmVp23TPw_vU4E93ZK";
+const APP_VERSION = "5";
+const CATALOG_SOURCE_YEAR = 2025;
 
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
@@ -11,7 +13,14 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, 
 let authSubscription = null;
 
 const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => [...document.querySelectorAll(selector)];
+const $ = (selector) => [...document.querySelectorAll(selector)];
+
+const normalizeSearchTerm = (value) =>
+  String(value ?? "")
+    .replace(/[,%_()*+]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
 
 const state = {
   q: "",
@@ -98,9 +107,14 @@ function authErrorMessage(error) {
   if (/user already registered/i.test(message)) return "Bu e-posta ile zaten bir hesap var. Giriş yapmayı dene.";
   if (/password.*(6|characters|length)/i.test(message)) return "Şifre en az 6 karakter olmalı.";
   if (/rate limit|too many requests/i.test(message)) return "Çok fazla deneme yapıldı. Biraz sonra tekrar deneyin.";
+  if (error?.code === "42501" || /permission denied|insufficient privilege/i.test(message)) {
+    return "Veri erişim yetkisi eksik. Supabase Data API izinlerini kontrol et.";
+  }
   if (/invalid api key/i.test(message)) return "Supabase bağlantı anahtarı geçersiz. Sayfayı yenileyip tekrar dene.";
   return message;
 }
+
+
 
 async function syncProfile(user, displayName = "") {
   if (!user?.id) return;
@@ -112,13 +126,15 @@ async function syncProfile(user, displayName = "") {
   if (error) console.warn("Profil senkronizasyonu başarısız:", error);
 }
 
-async function refreshAuthUi() {
-  const session = await getSession();
+async function refreshAuthUi(sessionOverride = undefined) {
+  const session = sessionOverride === undefined ? await getSession() : sessionOverride;
   const button = $("#authBtn");
   if (!button) return;
-  button.textContent = session ? "Çıkış Yap" : "Giriş Yap";
-  button.title = session ? `${session.user.email} · Çıkış yap` : "Giriş yap";
+  button.textContent = session ? "Hesabım" : "Giriş Yap";
+  button.title = session ? session.user.email + " · Hesap açık" : "Giriş yap";
 }
+
+
 
 function resourceCard(resource) {
   const isOfficial = resource.authority === "official";
@@ -206,7 +222,7 @@ async function fetchResources() {
   }
 
   if (state.q) {
-    const term = state.q.replace(/[%_]/g, " ").trim();
+    const term = normalizeSearchTerm(state.q);
     query = query.or(
       `title.ilike.%${term}%,summary.ilike.%${term}%,source_name.ilike.%${term}%,category.ilike.%${term}%`
     );
@@ -231,7 +247,7 @@ async function fetchNotes() {
   if (state.type !== "all") query = query.eq("content_type", state.type);
 
   if (state.q) {
-    const term = state.q.replace(/[%_]/g, " ").trim();
+    const term = normalizeSearchTerm(state.q);
     query = query.or(
       `title.ilike.%${term}%,description.ilike.%${term}%,topic.ilike.%${term}%,lecturer.ilike.%${term}%,university.ilike.%${term}%`
     );
@@ -253,7 +269,7 @@ async function fetchNotes() {
 async function fetchCatalogMatches() {
   if (!state.q) return [];
 
-  const term = state.q.replace(/[%_]/g, " ").trim();
+  const term = normalizeSearchTerm(state.q);
   if (!term) return [];
 
   const { data, error } = await db
@@ -418,15 +434,31 @@ async function loadCatalog() {
     cache.programs = programsPayload.items || [];
     cache.catalogOffers = offersPayload.items || [];
 
-    catalogMeta.offers = offersPayload.meta?.offer_count || cache.catalogOffers.length;
-    catalogMeta.universities = universitiesPayload.meta?.university_count || cache.universities.length;
-    catalogMeta.programs = programsPayload.meta?.program_count || cache.programs.length;
+    const isTurkey = (item) =>
+      String(item?.region || "").toLocaleLowerCase("tr-TR") === "türkiye";
+    const turkeyUniversityIndexes = new Set(
+      cache.universities
+        .map((item, index) => (isTurkey(item) ? index : -1))
+        .filter((index) => index >= 0)
+    );
+    const turkeyOffers = cache.catalogOffers.filter((offer) => turkeyUniversityIndexes.has(offer[0]));
+    const turkeyProgramIndexes = new Set(
+      turkeyOffers.map((offer) => offer[1]).filter(Number.isInteger)
+    );
+
+    catalogMeta.offers = turkeyOffers.length;
+    catalogMeta.universities = turkeyUniversityIndexes.size;
+    catalogMeta.programs = turkeyProgramIndexes.size;
     catalogLoaded = true;
 
     const citySelect = $("#catalogCity");
     if (citySelect) {
-      const cities = [...new Set(cache.universities.map((item) => item.city).filter(Boolean))]
-        .sort((a, b) => a.localeCompare(b, "tr"));
+      const cities = [...new Set(
+        cache.universities
+          .filter((item) => String(item.region || "").toLocaleLowerCase("tr-TR") === "türkiye")
+          .map((item) => item.city)
+          .filter(Boolean)
+      )].sort((a, b) => a.localeCompare(b, "tr"));
       citySelect.innerHTML =
         '<option value="all">Tüm şehirler</option>' +
         cities.map((city) => '<option value="' + escapeHtml(city) + '">' + escapeHtml(city) + "</option>").join("");
@@ -448,56 +480,106 @@ function renderCatalog() {
   const grid = $("#catalogGrid");
   if (!grid || !catalogLoaded) return;
 
-  const q = catalogState.q.trim().toLocaleLowerCase("tr-TR");
+  const q = normalizeSearchTerm(catalogState.q).toLocaleLowerCase("tr-TR");
+  const isTurkey = (item) =>
+    String(item?.region || "").toLocaleLowerCase("tr-TR") === "türkiye";
 
   if (catalogState.kind === "universities") {
     const rows = cache.universities
       .map((item, index) => ({ ...item, index }))
       .filter((item) => {
-        const haystack = [item.name, item.city, item.type].join(" ").toLocaleLowerCase("tr-TR");
-        return (!q || haystack.includes(q)) &&
-          (catalogState.city === "all" || item.city === catalogState.city);
+        const haystack = [item.name, item.city, item.type]
+          .join(" ")
+          .toLocaleLowerCase("tr-TR");
+        return (
+          isTurkey(item) &&
+          (!q || haystack.includes(q)) &&
+          (catalogState.city === "all" || item.city === catalogState.city)
+        );
       });
 
-    grid.innerHTML = rows.slice(0, 60).map((item) => {
-      const count = cache.catalogOffers.filter((offer) => offer[0] === item.index).length;
-      return '<article class="catalog-card">' +
-        '<div class="catalog-card-top"><span class="catalog-badge">' + escapeHtml(item.type) + '</span><span class="catalog-city">' + escapeHtml(item.city || "—") + '</span></div>' +
-        '<h3>' + escapeHtml(item.name) + '</h3>' +
-        '<p>' + count.toLocaleString("tr-TR") + ' program/tercih kaydı</p>' +
-        '<div class="catalog-meta"><span>' + escapeHtml(item.region) + '</span><span>2025 verisi</span></div>' +
-        '</article>';
-    }).join("") || '<div class="loading">Aramana uygun üniversite bulunamadı.</div>';
+    grid.innerHTML =
+      rows.slice(0, 60).map((item) => {
+        const count = cache.catalogOffers.filter(
+          (offer) => offer[0] === item.index && isTurkey(item)
+        ).length;
+        return (
+          '<article class="catalog-card">' +
+          '<div class="catalog-card-top"><span class="catalog-badge">' +
+          escapeHtml(item.type) +
+          '</span><span class="catalog-city">' +
+          escapeHtml(item.city || "—") +
+          '</span></div>' +
+          '<h3>' + escapeHtml(item.name) + '</h3>' +
+          '<p>' + count.toLocaleString("tr-TR") +
+          ' program/tercih kaydı</p>' +
+          '<div class="catalog-meta"><span>' +
+          escapeHtml(item.region || "Türkiye") +
+          '</span><span>' + CATALOG_SOURCE_YEAR + ' verisi</span></div>' +
+          '</article>'
+        );
+      }).join("") ||
+      '<div class="loading">Aramana uygun üniversite bulunamadı.</div>';
 
-    $("#catalogResultInfo").textContent = rows.length > 60
-      ? "İlk 60 sonuç gösteriliyor."
-      : rows.length.toLocaleString("tr-TR") + " üniversite";
+    $("#catalogResultInfo").textContent =
+      rows.length > 60
+        ? "İlk 60 sonuç gösteriliyor."
+        : rows.length.toLocaleString("tr-TR") + " Türkiye yükseköğretim kurumu";
     return;
   }
+
+  const turkeyProgramIndexes = new Set(
+    cache.catalogOffers
+      .filter((offer) => isTurkey(cache.universities[offer[0]]))
+      .map((offer) => offer[1])
+  );
 
   const rows = cache.programs
     .map((item, index) => ({ ...item, index }))
     .filter((item) => {
       const haystack = [item.name, item.level, item.score_type, ...(item.faculties || [])]
-        .join(" ").toLocaleLowerCase("tr-TR");
-      return (!q || haystack.includes(q)) &&
-        (catalogState.level === "all" || item.level === catalogState.level);
+        .join(" ")
+        .toLocaleLowerCase("tr-TR");
+      return (
+        turkeyProgramIndexes.has(item.index) &&
+        (!q || haystack.includes(q)) &&
+        (catalogState.level === "all" || item.level === catalogState.level)
+      );
     });
 
-  grid.innerHTML = rows.slice(0, 60).map((item) => {
-    const count = cache.catalogOffers.filter((offer) => offer[1] === item.index).length;
-    return '<article class="catalog-card">' +
-      '<div class="catalog-card-top"><span class="catalog-badge">' + escapeHtml(item.level) + '</span><span class="catalog-city">' + escapeHtml(item.score_type || "—") + '</span></div>' +
-      '<h3>' + escapeHtml(item.name) + '</h3>' +
-      '<p>' + count.toLocaleString("tr-TR") + ' üniversite/program kaydında yer alıyor · ' + escapeHtml(item.duration_years || "—") + ' yıl</p>' +
-      '<div class="catalog-meta"><span>' + escapeHtml((item.faculties || []).slice(0, 2).join(" · ") || "Fakülte bilgisi yok") + '</span><span>2025</span></div>' +
-      '</article>';
-  }).join("") || '<div class="loading">Aramana uygun bölüm/program bulunamadı.</div>';
+  grid.innerHTML =
+    rows.slice(0, 60).map((item) => {
+      const count = cache.catalogOffers.filter(
+        (offer) =>
+          offer[1] === item.index &&
+          isTurkey(cache.universities[offer[0]])
+      ).length;
+      return (
+        '<article class="catalog-card">' +
+        '<div class="catalog-card-top"><span class="catalog-badge">' +
+        escapeHtml(item.level) +
+        '</span><span class="catalog-city">' +
+        escapeHtml(item.score_type || "—") +
+        '</span></div>' +
+        '<h3>' + escapeHtml(item.name) + '</h3>' +
+        '<p>' + count.toLocaleString("tr-TR") +
+        ' Türkiye program kaydında yer alıyor · ' +
+        escapeHtml(item.duration_years || "—") + ' yıl</p>' +
+        '<div class="catalog-meta"><span>' +
+        escapeHtml((item.faculties || []).slice(0, 2).join(" · ") || "Fakülte bilgisi yok") +
+        '</span><span>' + CATALOG_SOURCE_YEAR + '</span></div>' +
+        '</article>'
+      );
+    }).join("") ||
+    '<div class="loading">Aramana uygun bölüm/program bulunamadı.</div>';
 
-  $("#catalogResultInfo").textContent = rows.length > 60
-    ? "İlk 60 sonuç gösteriliyor."
-    : rows.length.toLocaleString("tr-TR") + " program";
+  $("#catalogResultInfo").textContent =
+    rows.length > 60
+      ? "İlk 60 sonuç gösteriliyor."
+      : rows.length.toLocaleString("tr-TR") + " Türkiye programı";
 }
+
+
 
 
 async function fetchRoadmap(domain, year) {
@@ -600,7 +682,10 @@ async function submitAuth(event) {
       ? await db.auth.signUp({
           email,
           password,
-          options: { data: { display_name: displayName || "Öğrenci" } },
+          options: {
+            data: { display_name: displayName || "Öğrenci" },
+            emailRedirectTo: window.location.href.split("#")[0],
+          },
         })
       : await db.auth.signInWithPassword({ email, password });
 
@@ -1184,8 +1269,8 @@ renderTimer();
 bindEvents();
 bindCatalogEvents();
 
-authSubscription = db.auth.onAuthStateChange(() => {
-  refreshAuthUi();
+authSubscription = db.auth.onAuthStateChange((_event, session) => {
+  queueMicrotask(() => refreshAuthUi(session));
 });
 
 (async () => {
