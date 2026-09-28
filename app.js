@@ -1053,7 +1053,7 @@ function removeTask(id) {
   renderTasks();
 }
 
-const preferenceDefaults={education_level:"Lisans",university:"",department:"",study_year:"",goal:"",daily_minutes:60,focus_mode:"pomodoro",theme:"system",notifications:true,preferred_topics:[]};
+const preferenceDefaults={education_level:"Lisans",university:"",department:"",study_year:"",goal:"",daily_minutes:60,focus_mode:"pomodoro",theme:"light",notifications:true,preferred_topics:[]};
 function readLocalPreferences(){try{const raw=JSON.parse(localStorage.getItem("notora_preferences")||"null");return{...preferenceDefaults,...(raw||{})};}catch{return{...preferenceDefaults};}}
 function writeLocalPreferences(prefs){try{localStorage.setItem("notora_preferences",JSON.stringify(prefs));}catch{}}
 function applyTheme(theme){
@@ -1071,6 +1071,111 @@ function addFocusMinutes(minutes){const s=getFocusState();s.minutes+=Number(minu
 function updateTodayDashboard(){const focus=getFocusState();const tasks=readTasks();if($("#todayMinutes"))$("#todayMinutes").textContent=String(focus.minutes||0);if($("#todayTasks"))$("#todayTasks").textContent=String(tasks.filter((t)=>t.done).length);if($("#todayStreak"))$("#todayStreak").textContent=String(focus.streak||0);}
 function renderTodayFocus(){const prefs=readLocalPreferences();if($("#todayFocusTitle"))$("#todayFocusTitle").textContent=prefs.goal?"Bugünkü hedef: "+prefs.goal:"Bugünkü çalışma oturumunu başlat.";if($("#todayFocusText"))$("#todayFocusText").textContent="Günlük hedefin "+(prefs.daily_minutes||60)+" dakika. Bir oturum başlatıp tek konuya odaklan.";updateTodayDashboard();}
 const routeTitles={home:"Ana Sayfa",discover:"Keşfet",catalog:"Üniversite & Bölüm",roadmap:"Yol Haritası",calendar:"Takvim",tools:"Çalışma",community:"Topluluk",profile:"Profil"};
+
+function initNotoraMotion(){
+  document.body.classList.add("motion-ready");
+
+  const revealTargets = [
+    ...$(".page-view.active > .panel"),
+    ...$(".page-view.active > .two-col > .panel"),
+    ...$(".quick-card"),
+    ...$(".roadmap-card"),
+    ...$(".catalog-card"),
+    ...$(".catalog-level-overview-card"),
+  ];
+
+  revealTargets.forEach((element, index)=>{
+    element.style.setProperty("--motion-delay", Math.min(index, 8) * 45 + "ms");
+  });
+
+  if(!initNotoraMotion.revealObserver){
+    initNotoraMotion.revealObserver = new IntersectionObserver((entries)=>{
+      entries.forEach((entry)=>{
+        if(entry.isIntersecting) entry.target.classList.add("in-view");
+      });
+    },{threshold:.08});
+  }
+  revealTargets.forEach((element)=>initNotoraMotion.revealObserver.observe(element));
+
+  const tiltTargets = $(".quick-card,.result-card,.catalog-card,.roadmap-card,.tool-card,.level-card");
+  tiltTargets.forEach((element)=>{
+    if(element.dataset.motionBound) return;
+    element.dataset.motionBound="1";
+    element.addEventListener("pointermove",(event)=>{
+      if(window.matchMedia?.("(pointer:coarse)").matches) return;
+      const rect=element.getBoundingClientRect();
+      const x=((event.clientX-rect.left)/rect.width)*100;
+      const y=((event.clientY-rect.top)/rect.height)*100;
+      element.style.setProperty("--mx",x+"%");
+      element.style.setProperty("--my",y+"%");
+      element.style.setProperty("--tilt-x",((50-y)/18).toFixed(2)+"deg");
+      element.style.setProperty("--tilt-y",((x-50)/18).toFixed(2)+"deg");
+    });
+    element.addEventListener("pointerleave",()=>{
+      element.style.setProperty("--mx","50%");
+      element.style.setProperty("--my","50%");
+      element.style.setProperty("--tilt-x","0deg");
+      element.style.setProperty("--tilt-y","0deg");
+    });
+  });
+
+  $(".primary-btn,.secondary-btn,.ghost-btn,.catalog-tab,.year-tab,.tab").forEach((button)=>{
+    if(button.dataset.rippleBound) return;
+    button.dataset.rippleBound="1";
+    button.addEventListener("click",(event)=>{
+      if(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+      const rect=button.getBoundingClientRect();
+      const ripple=document.createElement("span");
+      ripple.className="ripple";
+      ripple.style.left=(event.clientX-rect.left)+"px";
+      ripple.style.top=(event.clientY-rect.top)+"px";
+      button.appendChild(ripple);
+      window.setTimeout(()=>ripple.remove(),520);
+    });
+  });
+
+  if(!initNotoraMotion.counterObserver){
+    const counterTargets=$("#statResources,#statNotes,#statEvents,#heroUniversityCount,#catalogUniversityCount,#catalogProgramCount,#catalogOfferCount,#todayMinutes,#todayTasks,#todayStreak,#gpaResult");
+    const animateValue=(element)=>{
+      if(!element || element.dataset.counterBusy==="1") return;
+      const raw=element.textContent.trim();
+      if(!/^\d[\d.,]*$/.test(raw)) return;
+      const target=Number(raw.replace(/\./g,"").replace(",",".")) || 0;
+      if(!Number.isFinite(target) || target>1000000) return;
+      if(element.dataset.counterTarget===String(target)) return;
+      element.dataset.counterTarget=String(target);
+      element.dataset.counterBusy="1";
+      const start=Number(element.dataset.counterLast||0);
+      const started=performance.now();
+      const duration=520;
+      const tick=(now)=>{
+        const progress=Math.min(1,(now-started)/duration);
+        const eased=1-Math.pow(1-progress,3);
+        const value=Math.round(start+(target-start)*eased);
+        element.textContent=String(value);
+        if(progress<1) requestAnimationFrame(tick);
+        else {
+          element.textContent=raw;
+          element.dataset.counterLast=String(target);
+          element.dataset.counterBusy="0";
+        }
+      };
+      requestAnimationFrame(tick);
+    };
+    initNotoraMotion.counterObserver=new MutationObserver((records)=>{
+      records.forEach((record)=>{
+        const element=record.target.closest?.("#statResources,#statNotes,#statEvents,#heroUniversityCount,#catalogUniversityCount,#catalogProgramCount,#catalogOfferCount,#todayMinutes,#todayTasks,#todayStreak,#gpaResult");
+        if(element) animateValue(element);
+      });
+    });
+    counterTargets.forEach((element)=>initNotoraMotion.counterObserver.observe(element,{childList:true,characterData:true,subtree:true}));
+  }
+
+  const activePage=document.querySelector(".page-view.active");
+  activePage?.querySelectorAll(".panel,.quick-card,.result-card,.catalog-card,.roadmap-card,.tool-card").forEach((el)=>el.classList.add("in-view"));
+}
+
+
 function currentRoute(){const raw=window.location.hash.replace(/^#\/?/,"").split("?")[0];return routeTitles[raw]?raw:"home";}
 function renderRoute(){
   const route=currentRoute();
@@ -1081,6 +1186,7 @@ function renderRoute(){
   if(route==="catalog")loadCatalog();
   if(route==="roadmap")renderRoadmap();
   if(route==="discover"||route==="calendar")loadAll();
+  window.setTimeout(initNotoraMotion, 0);
 }
 function openNoteReader(note){const modal=$("#readerModal"),frame=$("#readerFrame"),fallback=$("#readerFallback");if(!modal||!frame)return;const url=SUPABASE_URL+"/storage/v1/object/public/note-files/"+note.file_path.split("/").map(encodeURIComponent).join("/");const isPdf=/\.pdf$/i.test(note.file_name||note.file_path);$("#readerTitle").textContent=note.title||"Öğrenci kaynağı";$("#readerMeta").textContent=[note.department,note.study_year?note.study_year+". sınıf":"",note.content_type].filter(Boolean).join(" · ");frame.classList.toggle("hidden",!isPdf);fallback.classList.toggle("hidden",isPdf);if(isPdf){frame.src=url;fallback.innerHTML='<a class="primary-btn" href="'+escapeHtml(url)+'" target="_blank" rel="noopener">PDF’yi aç</a>';}else{frame.removeAttribute("src");fallback.innerHTML='<b>Bu dosya türü tarayıcı içinde önizlenemiyor.</b><p>Dosya Notora kütüphanesinde tutuluyor.</p><a class="secondary-btn" href="'+escapeHtml(url)+'" target="_blank" rel="noopener">Dosyayı aç</a>';}modal.classList.remove("hidden");}
 async function shareProfileView(){const url=new URL(window.location.href);url.search="";url.hash="#/profile";try{await navigator.clipboard.writeText(url.toString());showToast("Profil bağlantısı kopyalandı.");}catch{window.prompt("Bağlantıyı kopyala:",url.toString());}}
@@ -1355,6 +1461,7 @@ applySharedView();
 bindEvents();
 bindCatalogEvents();
 renderRoute();
+initNotoraMotion();
 
 authSubscription = db.auth.onAuthStateChange((_event, session) => {
   queueMicrotask(() => { refreshAuthUi(session); loadPreferences().catch(() => {}); });
