@@ -57,6 +57,17 @@
   </div>
 </section>
 
+<section class="panel roadmap-panel" id="roadmap">
+  <div class="section-head">
+    <div><span class="eyebrow">Ders haritası</span><h2>Sınıfını ve alanını seç, konularını adım adım gör.</h2><p>Bu harita üniversiteye özgü resmî müfredat yerine genel bir akademik yol haritasıdır; ders içerikleri üniversite ve programa göre değişebilir.</p></div>
+  </div>
+  <div class="roadmap-controls">
+    <select id="roadmapDomain"><option value="Genel Akademik">Genel Akademik</option><option value="Bilgisayar">Bilgisayar</option><option value="Mühendislik">Mühendislik</option><option value="Elektrik-Elektronik">Elektrik-Elektronik</option><option value="İktisat">İktisat</option><option value="İşletme">İşletme</option><option value="Hukuk">Hukuk</option><option value="Sağlık">Sağlık</option><option value="Fen Bilimleri">Fen Bilimleri</option><option value="Sosyal Bilimler">Sosyal Bilimler</option></select>
+    <div class="year-tabs"><button class="year-tab active" data-year="1">1. sınıf</button><button class="year-tab" data-year="2">2. sınıf</button><button class="year-tab" data-year="3">3. sınıf</button><button class="year-tab" data-year="4">4. sınıf</button></div>
+  </div>
+  <div id="roadmapGrid" class="roadmap-grid"></div>
+</section>
+
 <section class="two-col" id="calendar">
   <section class="panel calendar-panel"><div class="section-head"><div><span class="eyebrow">Yaklaşanlar</span><h2>Takvim ve son başvurular</h2><p>Resmî kaynaklardan gelen önemli tarihleri tek yerde takip et.</p></div><a class="secondary-btn" href="https://www.osym.gov.tr/Sayfa/SinavTakvimi/tr-TR" target="_blank" rel="noopener">ÖSYM takvimini aç</a></div><div id="eventsList" class="events-list"><div class="loading">Takvim yükleniyor…</div></div></section>
   <aside class="panel source-panel"><span class="eyebrow">Kaynak güveni</span><h2>Bilginin izini kaybetme.</h2><p>Notora’da dış bağlantılar içerik yerine “kaynağa giden yol” olarak sunulur. Güncelliğini yitiren bir kaynağı raporlamaya da açığız.</p><div class="source-stats"><div><b id="officialCount">—</b><span>resmî</span></div><div><b id="externalCount">—</b><span>doğrulanmış dış</span></div><div><b id="communityCount">—</b><span>öğrenci</span></div></div><button class="secondary-btn full" id="reportBtn">Bozuk / eski kaynak bildir</button></aside>
