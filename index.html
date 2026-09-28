@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Notora — Öğrencinin Dijital Çalışma Merkezi</title>
   <meta name="description" content="Notora; bölüm, üniversite, öğrenci notları, akademik kaynaklar, çalışma planı ve kişisel hedefleri tek merkezde birleştirir.">
-  <meta name="theme-color" content="#0b0f0e"><meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f4f6f1"><meta name="color-scheme" content="light">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="styles.css?v=8"><link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css?v=9"><link rel="manifest" href="manifest.json">
 </head>
-<body>
+<body data-theme="light">
 <div class="shell">
 <div class="app-frame">
 <aside class="app-rail">
@@ -56,9 +56,18 @@
         <span class="search-icon">⌕</span><input id="searchInput" type="search" autocomplete="off" placeholder="Örn. “lineer cebir”, “staj”, “burs”, “ALES”…" aria-label="Notora'da ara"><button class="primary-btn" type="submit">Ara</button>
       </form>
       <div class="search-hints"><button class="hint" data-query="lineer cebir">lineer cebir</button><button class="hint" data-query="staj">staj</button><button class="hint" data-query="burs">burs</button><button class="hint" data-query="ALES">ALES</button><button class="hint" data-query="algoritma">algoritma</button></div>
-      <div class="trust-strip"><span>✓ Resmî kaynaklar etiketlenir</span><span>✓ Öğrenci katkıları ayrı gösterilir</span><span>✓ Kişisel ilerleme cihazında korunur</span></div>
+      <div class="trust-strip"><span>RESMÎ kaynaklar etiketlenir</span><span>ÖĞRENCİ katkıları ayrı gösterilir</span><span>İLERLEME cihazında korunur</span></div>
     </div>
     <aside class="hero-side">
+      <div class="hero-motion" aria-hidden="true">
+        <div class="motion-orbit orbit-one"></div>
+        <div class="motion-orbit orbit-two"></div>
+        <div class="motion-core"></div>
+        <span class="motion-dot dot-one"></span>
+        <span class="motion-dot dot-two"></span>
+        <span class="motion-dot dot-three"></span>
+        <div class="motion-label"><span>FOCUS LOOP</span><b>25 → 5 → 25</b></div>
+      </div>
       <div class="status-card status-card-live"><div><span class="live-dot"></span><b>Bilgi akışı</b><span class="status-chip">CANLI</span></div><small id="lastSync">Kaynaklar yükleniyor…</small></div>
       <div class="hero-stats">
         <div><small>Doğrulanmış kaynak</small><strong id="statResources">—</strong><span>akademik bağlantı</span></div>
@@ -205,5 +214,5 @@
 <div class="modal hidden" id="shareModal"><div class="modal-backdrop" data-close></div><div class="modal-card wide"><button class="modal-close" data-close>×</button><span class="eyebrow">Topluluğa katkı</span><h3>Kaynak paylaş</h3><form id="shareForm"><div class="form-grid"><label>Başlık<input name="title" required></label><label>Bölüm<input name="department" required placeholder="Örn. Bilgisayar Mühendisliği"></label><label>Sınıf<select name="study_year"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><label>Konu<input name="topic"></label><label>Tür<select name="content_type"><option>Ders Notu</option><option>Sınav Hazırlık</option><option>Özet</option><option>Slayt</option></select></label><label>Üniversite<input name="university"></label><label class="full">Açıklama<textarea name="description" rows="3"></textarea></label><label class="file full">Dosya<input name="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" required><small>PDF, Word, PowerPoint veya TXT</small></label></div><button class="primary-btn full" type="submit">Yükle ve yayınla</button></form></div></div>
 <div class="modal hidden" id="readerModal"><div class="modal-backdrop" data-close></div><div class="modal-card wide reader-card"><button class="modal-close" data-close>×</button><span class="eyebrow">Notora içi görüntüleme</span><h3 id="readerTitle">Kaynak</h3><p id="readerMeta" class="modal-sub"></p><iframe id="readerFrame" title="Not görüntüleyici"></iframe><div id="readerFallback" class="reader-fallback hidden"></div></div></div>
 <div class="toast" id="toast" aria-live="polite"></div>
-<script src="app.js?v=8"></script>
+<script src="app.js?v=9"></script>
 </body></html>
