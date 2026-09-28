@@ -70,3 +70,8 @@ study_catalog
 - kişiselleştirilmiş öğrenci ana sayfası
 - bildirimler ve yaklaşan sınav/başvuru hatırlatıcıları
 - mobil istemci
+
+
+## Türkiye üniversite/program kataloğu
+
+Arayüzdeki katalog, 2025 YÖK Atlas tabanlı açık veriden derlenen 224 üniversite/kurum, 2.765 farklı program türü ve 21.542 üniversite-program kaydını içerir. Kaynak veri: cngil/turkiye-university-programs (CC BY 4.0). Katalog yeni YÖK Atlas verisi yayımlandıkça güncellenmelidir.
