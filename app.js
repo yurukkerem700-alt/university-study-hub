@@ -1171,6 +1171,19 @@ function initNotoraMotion(){
     counterTargets.forEach((element)=>initNotoraMotion.counterObserver.observe(element,{childList:true,characterData:true,subtree:true}));
   }
 
+  if(!initNotoraMotion.domObserver){
+    const root=document.querySelector("main");
+    if(root){
+      let frame=0;
+      initNotoraMotion.domObserver=new MutationObserver((records)=>{
+        if(!records.some((record)=>record.addedNodes.length)) return;
+        cancelAnimationFrame(frame);
+        frame=requestAnimationFrame(()=>initNotoraMotion());
+      });
+      initNotoraMotion.domObserver.observe(root,{childList:true,subtree:true});
+    }
+  }
+
   const activePage=document.querySelector(".page-view.active");
   activePage?.querySelectorAll(".panel,.quick-card,.result-card,.catalog-card,.roadmap-card,.tool-card").forEach((el)=>el.classList.add("in-view"));
 }
