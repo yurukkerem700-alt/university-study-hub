@@ -1,332 +1,80 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Notora | Akademik Not ve Sınav Hazırlık Platformu</title>
-    <meta
-      name="description"
-      content="Notora, üniversite öğrencileri için ders notu arama, sınav hazırlık ve öğretmen analitiği sunan profesyonel akademik platformdur."
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
-  <body>
-    <div class="page-shell">
-      <header class="topbar">
-        <div class="brand-wrap">
-          <div class="brand-mark">N</div>
-          <div>
-            <div class="brand-name">Notora</div>
-            <div class="brand-sub">Akademik öğrenme platformu</div>
-          </div>
-        </div>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Notora — Üniversite Bilgi ve Çalışma Merkezi</title>
+  <meta name="description" content="Üniversite öğrencileri için doğrulanabilir akademik kaynaklar, ders notları, sınav takvimi ve çalışma araçları.">
+  <meta name="theme-color" content="#0d7f75">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="shell">
+<header class="topbar">
+  <a class="brand" href="#"><span class="mark">N</span><span><b>Notora</b><small>Üniversite bilgi merkezi</small></span></a>
+  <nav><a href="#discover">Keşfet</a><a href="#calendar">Takvim</a><a href="#tools">Araçlar</a><a href="#community">Topluluk</a></nav>
+  <div class="actions"><button class="ghost-btn" id="authBtn">Giriş Yap</button><button class="primary-btn" id="shareBtn">＋ Not Paylaş</button></div>
+</header>
 
-        <nav class="main-nav" aria-label="Ana navigasyon">
-          <a href="#discover">Keşfet</a>
-          <a href="#leaderboard">Liderlik</a>
-          <a href="#teacher">Öğretmen</a>
-          <a href="#community">Topluluk</a>
-        </nav>
+<main>
+<section class="hero panel">
+  <div class="hero-main">
+    <div class="eyebrow">Tek arama · gerçek kaynaklar · net cevap</div>
+    <h1>Üniversitede ihtiyacın olan<br><em>bilgiyi tek yerde bul.</em></h1>
+    <p>Resmî kurumlar, açık dersler, öğrenci notları ve akademik takvimleri aynı aramada keşfet. Her kaynağın kimden geldiğini ve ne kadar doğrulanmış olduğunu açıkça gör.</p>
+    <form class="global-search" id="searchForm">
+      <span class="search-icon">⌕</span><input id="searchInput" type="search" autocomplete="off" placeholder="Örn. “lineer cebir”, “KYK bursu”, “staj”, “ALES” …" aria-label="Notora'da ara"><button class="primary-btn" type="submit">Ara</button>
+    </form>
+    <div class="search-hints"><button class="hint" data-query="lineer cebir">lineer cebir</button><button class="hint" data-query="staj">staj</button><button class="hint" data-query="burs">burs</button><button class="hint" data-query="ALES">ALES</button><button class="hint" data-query="algoritma">algoritma</button></div>
+    <div class="trust-strip"><span>✓ Resmî kaynaklar etiketlenir</span><span>✓ Güncel doğrulama tarihi</span><span>✓ Öğrenci katkıları ayrı gösterilir</span></div>
+  </div>
+  <aside class="hero-side">
+    <div class="status-card"><div><span class="live-dot"></span><b>Bilgi akışı</b></div><small id="lastSync">Kaynaklar yükleniyor…</small></div>
+    <div class="hero-stats"><div><small>Kütüphane</small><strong id="statResources">—</strong><span>doğrulanmış bağlantı</span></div><div><small>Öğrenci notları</small><strong id="statNotes">—</strong><span>topluluk kaynağı</span></div><div><small>Yaklaşan</small><strong id="statEvents">—</strong><span>sınav & fırsat</span></div><div><small>Konular</small><strong>10+</strong><span>temel alan</span></div></div>
+  </aside>
+</section>
 
-        <div class="header-actions">
-          <button class="ghost-btn">Giriş Yap</button>
-          <button class="primary-btn">Not Paylaş</button>
-        </div>
-      </header>
+<section class="discover" id="discover">
+  <div class="section-intro"><div><span class="eyebrow">Bilgi keşfi</span><h2>Aradığını sonuç değil, <em>kaynak</em> olarak bul.</h2><p>Notora önce kaynağın türünü, sonra içeriğini gösterir. Böylece “bu bilgi nereden geliyor?” sorusunun cevabı her kartta vardır.</p></div><div class="result-tabs" role="tablist"><button class="tab active" data-tab="all">Hepsi</button><button class="tab" data-tab="resource">Güvenilir kaynaklar</button><button class="tab" data-tab="note">Öğrenci notları</button><button class="tab" data-tab="event">Takvim</button></div></div>
+  <div class="browse-grid">
+    <aside class="panel filters">
+      <div class="panel-head"><div><span class="eyebrow">Daralt</span><h3>Filtreler</h3></div><button class="text-btn" id="resetFilters">Temizle</button></div>
+      <label>Bölüm<select id="departmentSelect"><option value="all">Tümü</option><option>Bilgisayar Mühendisliği</option><option>Elektrik-Elektronik Mühendisliği</option><option>İktisat</option><option>Hukuk</option><option>Tıp</option></select></label>
+      <label>Sınıf<select id="yearSelect"><option value="all">Tümü</option><option value="1">1. sınıf</option><option value="2">2. sınıf</option><option value="3">3. sınıf</option><option value="4">4. sınıf</option></select></label>
+      <label>Konu<select id="topicSelect"><option value="all">Tümü</option><option>Veri Yapıları</option><option>Makro Ekonomi</option><option>İnternet Hukuku</option><option>Anatomi</option><option>Devre Analizi</option><option>İstatistik</option></select></label>
+      <label>İçerik<select id="typeSelect"><option value="all">Tümü</option><option>Ders Notu</option><option>Sınav Hazırlık</option><option>Özet</option><option>Slayt</option></select></label>
+      <label>Kaynak türü<select id="authoritySelect"><option value="all">Hepsi</option><option value="official">Resmî kurum</option><option value="verified_external">Doğrulanmış dış kaynak</option></select></label>
+      <div class="filter-note"><b>Güven modeli</b><p><strong>Resmî</strong> = kurumun kendi yayını. <strong>Doğrulanmış dış kaynak</strong> = güvenilir eğitim kurumu/platformu. <strong>Öğrenci</strong> = topluluk içeriği.</p></div>
+    </aside>
 
-      <main class="main-layout">
-        <section class="hero panel">
-          <div class="hero-copy">
-            <div class="segment-toggle" aria-label="Mod seçimi">
-              <button class="segment active" type="button" data-mode="student">Öğrenci</button>
-              <button class="segment" type="button" data-mode="teacher">Öğretmen</button>
-            </div>
+    <section class="panel results-panel">
+      <div class="results-head"><div><span class="eyebrow" id="resultEyebrow">Kütüphane</span><h3 id="resultTitle">Öne çıkan kaynaklar</h3></div><select id="sortSelect"><option value="popular">En erişilebilir</option><option value="newest">En yeni</option><option value="rating">En yüksek puan</option></select></div>
+      <div id="resultsGrid" class="results-grid"></div>
+      <div id="resultsLoading" class="loading">Kaynaklar yükleniyor…</div>
+    </section>
+  </div>
+</section>
 
-            <h1>Konuyla ilgili notu bul, sınava hazır ol.</h1>
-            <p>
-              Ders, bölüm ve sınıf filtresine göre arama yap. Notları indir, konu
-              bazlı tekrar et, öğretmenlerin sınıf analitiğini izle.
-            </p>
+<section class="two-col" id="calendar">
+  <section class="panel calendar-panel"><div class="section-head"><div><span class="eyebrow">Yaklaşanlar</span><h2>Takvim ve son başvurular</h2><p>Resmî kaynaklardan gelen önemli tarihleri tek yerde takip et.</p></div><a class="secondary-btn" href="https://www.osym.gov.tr/Sayfa/SinavTakvimi/tr-TR" target="_blank" rel="noopener">ÖSYM takvimini aç</a></div><div id="eventsList" class="events-list"><div class="loading">Takvim yükleniyor…</div></div></section>
+  <aside class="panel source-panel"><span class="eyebrow">Kaynak güveni</span><h2>Bilginin izini kaybetme.</h2><p>Notora’da dış bağlantılar içerik yerine “kaynağa giden yol” olarak sunulur. Güncelliğini yitiren bir kaynağı raporlamaya da açığız.</p><div class="source-stats"><div><b id="officialCount">—</b><span>resmî</span></div><div><b id="externalCount">—</b><span>doğrulanmış dış</span></div><div><b id="communityCount">—</b><span>öğrenci</span></div></div><button class="secondary-btn full" id="reportBtn">Bozuk / eski kaynak bildir</button></aside>
+</section>
 
-            <div class="search-box" aria-label="Arama alanı">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M10.5 3a7.5 7.5 0 015.93 12.79l4.37 4.38 1.42-1.42-4.38-4.37A7.5 7.5 0 1110.5 3zm0 2a5.5 5.5 0 100 11 5.5 5.5 0 000-11z"
-                />
-              </svg>
-              <input
-                id="searchInput"
-                type="search"
-                placeholder="Ders, konu, başlık ya da öğretmen ara..."
-                aria-label="Ders veya konu ara"
-              />
-              <button class="primary-btn search-btn" type="button">Ara</button>
-            </div>
+<section class="panel tools-panel" id="tools"><div class="section-head"><div><span class="eyebrow">Çalışma masası</span><h2>Ders çalışırken başka site arama.</h2><p>Hızlı, tarayıcı içinde çalışan araçlar. Veriler cihazında tutulur.</p></div></div>
+<div class="tools-grid">
+  <div class="tool-card"><div class="tool-label">Not ortalaması</div><h3>GANO / GPA</h3><div id="gpaRows" class="gpa-rows"></div><button class="secondary-btn" id="addCourse">＋ Ders ekle</button><strong class="tool-result" id="gpaResult">—</strong></div>
+  <div class="tool-card"><div class="tool-label">Odak</div><h3>Pomodoro</h3><strong class="timer" id="timer">25:00</strong><div class="timer-actions"><button class="primary-btn" id="startTimer">Başlat</button><button class="secondary-btn" id="resetTimer">Sıfırla</button></div></div>
+  <div class="tool-card"><div class="tool-label">Plan</div><h3>Bugünün 3 işi</h3><form class="task-form" id="taskForm"><input id="taskInput" placeholder="Örn. Lineer cebir tekrar" maxlength="80"><button class="primary-btn">Ekle</button></form><div id="tasks" class="tasks"></div></div>
+</div></section>
 
-            <div class="quick-tags">
-              <button type="button" class="chip active">Mühendislik</button>
-              <button type="button" class="chip">İktisat</button>
-              <button type="button" class="chip">Hukuk</button>
-              <button type="button" class="chip">Tip</button>
-            </div>
-          </div>
+<section class="panel community-panel" id="community"><div class="section-head"><div><span class="eyebrow">Topluluk</span><h2>Öğrenci kaynakları da değerli; ama kimden geldiğini bil.</h2><p>Notlar, özetler ve sınav hazırlıkları topluluk tarafından eklenebilir. Kaynağın resmî kurum olmadığını her zaman açıkça işaretliyoruz.</p></div><button class="primary-btn" id="shareBtn2">＋ Kaynak paylaş</button></div></section>
+</main>
+</div>
 
-          <div class="hero-side">
-            <div class="metric-quad">
-              <div class="metric-card highlight">
-                <span class="label">Aktif öğrenci</span>
-                <strong id="statStudents">28.4K</strong>
-              </div>
-              <div class="metric-card">
-                <span class="label">İndirilen not</span>
-                <strong id="statDownloads">142K</strong>
-              </div>
-              <div class="metric-card">
-                <span class="label">Toplam paylaşım</span>
-                <strong id="statNotes">3.2K</strong>
-              </div>
-              <div class="metric-card accent">
-                <span class="label">Ortalama puan</span>
-                <strong>4.9/5</strong>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="content-grid" id="discover">
-          <aside class="panel filters-panel">
-            <div class="panel-topline">
-              <h2>Filtreler</h2>
-              <button class="text-btn" type="button" id="resetFilters">Temizle</button>
-            </div>
-
-            <div class="filter-group">
-              <label for="departmentSelect">Bölüm</label>
-              <select id="departmentSelect">
-                <option value="all">Tümü</option>
-                <option value="Bilgisayar Mühendisliği">Bilgisayar Mühendisliği</option>
-                <option value="Elektrik-Elektronik Mühendisliği">Elektrik-Elektronik</option>
-                <option value="İktisat">İktisat</option>
-                <option value="Hukuk">Hukuk</option>
-                <option value="Tıp">Tıp</option>
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label for="yearSelect">Sınıf</label>
-              <select id="yearSelect">
-                <option value="all">Tümü</option>
-                <option value="1">1. Sınıf</option>
-                <option value="2">2. Sınıf</option>
-                <option value="3">3. Sınıf</option>
-                <option value="4">4. Sınıf</option>
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label for="topicSelect">Konu başlığı</label>
-              <select id="topicSelect">
-                <option value="all">Tümü</option>
-                <option value="Veri Yapıları">Veri Yapıları</option>
-                <option value="Makro Ekonomi">Makro Ekonomi</option>
-                <option value="İnternet Hukuku">İnternet Hukuku</option>
-                <option value="Anatomi">Anatomi</option>
-                <option value="Devre Analizi">Devre Analizi</option>
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label for="typeSelect">İçerik türü</label>
-              <select id="typeSelect">
-                <option value="all">Tümü</option>
-                <option value="Ders Notu">Ders Notu</option>
-                <option value="Sınav Hazırlık">Sınav Hazırlık</option>
-                <option value="Özet">Özet</option>
-                <option value="Slayt">Slayt</option>
-              </select>
-            </div>
-
-            <div class="mini-callout">
-              <div class="mini-callout-top">
-                <span class="dot dot-green"></span>
-                <strong>Öğrenci profili</strong>
-              </div>
-              <p>Seçtiğin bölüm, sınıf ve konuya uygun en değerli notları öneriyoruz.</p>
-            </div>
-          </aside>
-
-          <section class="library-panel panel">
-            <div class="library-header">
-              <div>
-                <span class="eyebrow">İçerik merkezi</span>
-                <h2>En çok erişilen kaynaklar</h2>
-              </div>
-              <button class="secondary-btn" type="button">Yeni eklenenler</button>
-            </div>
-
-            <div id="notesGrid" class="notes-grid" aria-live="polite"></div>
-          </section>
-
-          <aside class="panel sidebar-panel" id="leaderboard">
-            <div class="panel-topline">
-              <h2>Liderlik panosu</h2>
-            </div>
-
-            <div class="leader-list">
-              <div class="leader-item top">
-                <div class="rank">#1</div>
-                <div class="leader-meta">
-                  <strong>Ayşe K.</strong>
-                  <span>Bilgisayar Müh.</span>
-                </div>
-                <div class="leader-score">24.8K</div>
-              </div>
-
-              <div class="leader-item">
-                <div class="rank">#2</div>
-                <div class="leader-meta">
-                  <strong>Mehmet T.</strong>
-                  <span>İktisat</span>
-                </div>
-                <div class="leader-score">21.3K</div>
-              </div>
-
-              <div class="leader-item">
-                <div class="rank">#3</div>
-                <div class="leader-meta">
-                  <strong>Zeynep A.</strong>
-                  <span>Hukuk</span>
-                </div>
-                <div class="leader-score">18.9K</div>
-              </div>
-            </div>
-
-            <div class="trend-box">
-              <div class="trend-header">
-                <span class="eyebrow">Bu hafta</span>
-                <strong>+18.2%</strong>
-              </div>
-              <p>En çok indirilip beğenilen ders notlarında güçlü artış var.</p>
-            </div>
-          </aside>
-        </section>
-
-        <section class="teacher-section panel" id="teacher">
-          <div class="section-header">
-            <div>
-              <span class="eyebrow">Öğretmen paneli</span>
-              <h2>Öğrenci davranışlarını ve içerik performansını görün</h2>
-            </div>
-            <button class="primary-btn teacher-login-trigger" type="button">Öğretmen Girişi</button>
-          </div>
-
-          <div class="teacher-grid">
-            <div class="teacher-card">
-              <div class="card-label">Ders erişimi</div>
-              <strong>96%</strong>
-              <span>Bu dönem dersi takip oranı</span>
-            </div>
-            <div class="teacher-card">
-              <div class="card-label">En çok izlenen konu</div>
-              <strong>Veri Yapıları</strong>
-              <span>1.240 öğrenci yeniledi</span>
-            </div>
-            <div class="teacher-card">
-              <div class="card-label">Sınav öncesi tamamlanma</div>
-              <strong>82%</strong>
-              <span>Haftalık tekrar oranı</span>
-            </div>
-            <div class="teacher-card">
-              <div class="card-label">Not katkısı</div>
-              <strong>3.4K</strong>
-              <span>Öğrenci katkılı doküman</span>
-            </div>
-          </div>
-        </section>
-
-        <section class="community-panel panel" id="community">
-          <div class="section-header">
-            <div>
-              <span class="eyebrow">Topluluk</span>
-              <h2>Katkı sağlayanlar</h2>
-            </div>
-          </div>
-
-          <div class="community-grid">
-            <div class="community-card community-card-featured">
-              <div class="community-avatar avatar-gold">A</div>
-              <div>
-                <strong>Ayşe K.</strong>
-                <p>Bu hafta 18 not yükledi</p>
-              </div>
-              <span class="badge">Top not paylaşım</span>
-            </div>
-            <div class="community-card">
-              <div class="community-avatar avatar-rose">M</div>
-              <div>
-                <strong>Mehmet T.</strong>
-                <p>4.9/5 not değerlendirmesi</p>
-              </div>
-            </div>
-            <div class="community-card">
-              <div class="community-avatar avatar-sky">Z</div>
-              <div>
-                <strong>Zeynep A.</strong>
-                <p>3.6K indirme yaptırdı</p>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
-
-    <div class="modal hidden" id="teacherModal" aria-hidden="true">
-      <div class="modal-backdrop" data-close="modal"></div>
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle">
-        <button class="modal-close" type="button" aria-label="Kapat">×</button>
-        <div class="modal-header">
-          <span class="eyebrow">Öğretmen hesabı</span>
-          <h3 id="teacherModalTitle">Öğretmen girişi</h3>
-        </div>
-
-        <form class="teacher-form">
-          <label>
-            <span>E-posta</span>
-            <input type="email" placeholder="ogretmen@universite.edu.tr" />
-          </label>
-          <label>
-            <span>Şifre</span>
-            <input type="password" placeholder="••••••••" />
-          </label>
-          <button class="primary-btn" type="submit">Panele giriş</button>
-        </form>
-
-        <div class="teacher-summary">
-          <div>
-            <small>Öğrenci tamamlanma</small>
-            <strong>84%</strong>
-          </div>
-          <div>
-            <small>Bu hafta</small>
-            <strong>+12.4%</strong>
-          </div>
-          <div>
-            <small>İzlenen konu</small>
-            <strong>Anatomi</strong>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="toast" id="toast" aria-live="polite"></div>
-
-    <script src="app.js"></script>
-  </body>
-</html>
-
+<div class="modal hidden" id="authModal"><div class="modal-backdrop" data-close></div><div class="modal-card"><button class="modal-close" data-close>×</button><span class="eyebrow">Notora hesabı</span><h3 id="authTitle">Giriş yap</h3><p class="modal-sub">Kaynak paylaşmak ve kişisel çalışma alanını senkronlamak için hesabını kullan.</p><form id="authForm"><label>E-posta<input id="authEmail" type="email" required autocomplete="email"></label><label>Şifre<input id="authPassword" type="password" minlength="6" required autocomplete="current-password"></label><label id="authNameWrap">Ad Soyad<input id="authName" autocomplete="name"></label><button class="primary-btn full" id="authSubmit" type="submit">Giriş Yap</button></form><button class="text-btn switch" id="authSwitch">Hesabın yok mu? Kayıt ol</button></div></div>
+<div class="modal hidden" id="shareModal"><div class="modal-backdrop" data-close></div><div class="modal-card wide"><button class="modal-close" data-close>×</button><span class="eyebrow">Topluluğa katkı</span><h3>Kaynak paylaş</h3><form id="shareForm"><div class="form-grid"><label>Başlık<input name="title" required></label><label>Bölüm<select name="department" required><option>Bilgisayar Mühendisliği</option><option>Elektrik-Elektronik Mühendisliği</option><option>İktisat</option><option>Hukuk</option><option>Tıp</option></select></label><label>Sınıf<select name="study_year"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><label>Konu<input name="topic"></label><label>Tür<select name="content_type"><option>Ders Notu</option><option>Sınav Hazırlık</option><option>Özet</option><option>Slayt</option></select></label><label>Üniversite<input name="university"></label><label class="full">Açıklama<textarea name="description" rows="3"></textarea></label><label class="file full">Dosya<input name="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" required><small>PDF, Word, PowerPoint veya TXT</small></label></div><button class="primary-btn full" type="submit">Yükle ve yayınla</button></form></div></div>
+<div class="toast" id="toast" aria-live="polite"></div>
+<script src="app.js"></script>
+</body></html>
