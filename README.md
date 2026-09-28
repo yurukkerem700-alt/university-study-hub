@@ -1,33 +1,27 @@
 # Notora — University Study Hub
 
-Üniversite öğrencileri için ders notu arama, sınav hazırlığı ve kaynak arşivi.
+Notora artık yalnızca bir demo arayüzü değil; Supabase tabanlı üniversite bilgi ve kaynak keşif merkezi olarak çalışır.
 
-## Özellikler
+## Ana yapı
+- Global arama: güvenilir kaynaklar + öğrenci notları + yaklaşan tarihler
+- Kaynak güven etiketi: resmî / doğrulanmış dış kaynak / öğrenci
+- Kaynağın sahibi, URL'si ve son doğrulama tarihi görünür
+- YÖK, ÖSYM, e-Devlet, İŞKUR, TÜBİTAK, MIT OpenCourseWare ve OpenStax gibi doğrulanmış kaynak dizini
+- Gerçek Supabase Auth ve kullanıcı hesabı
+- Gerçek not yükleme ve indirme
+- PDF / DOC / DOCX / PPT / PPTX / TXT desteği
+- Öğrenci filtreleme ve sıralama
+- ÖSYM/TÜBİTAK takvim kayıtları
+- GANO hesaplayıcı, Pomodoro ve günlük görev listesi
+- Responsive erişilebilirlik ve "/" ile hızlı arama
 
-- Bölüm, sınıf, konu ve içerik türüne göre filtreleme
-- Anlık arama ve Enter ile arama bildirimi
-- Popüler/yeni kaynak sıralaması
-- Hızlı bölüm etiketleri
-- Not önizleme ve indirme etkileşimleri
-- Öğrenci/öğretmen modu
-- Öğretmen giriş modalı, doğrulama ve Escape/backdrop ile kapatma
-- Responsive tasarım ve erişilebilir buton durumları
-- Harici bağımlılık veya build adımı gerektirmeyen statik yapı
+## Güven modeli
+Notora dış kaynakların içeriğini kendi içeriğiymiş gibi kopyalamaz. Kaynağı, kurumunu ve bağlantısını gösterir. Öğrenci tarafından yüklenen dosyalar ayrı bir kaynak türüdür.
 
-## Çalıştırma
+## Supabase
+Project: `notbul`
+Tablolar: `profiles`, `notes`, `note_likes`, `bookmarks`, `note_ratings`, `knowledge_resources`, `academic_events`
+Storage: `note-files`
 
-Proje klasöründe:
-
-```bash
-python -m http.server 8000
-```
-
-Ardından `http://localhost:8000` adresini açın.
-
-## Proje yapısı
-
-- `index.html` — sayfa semantiği ve içerik
-- `styles.css` — responsive görsel tasarım
-- `app.js` — filtreleme, arama, sıralama, modal ve buton etkileşimleri
-
-> Bu sürüm mevcut HTML/CSS yapısını korur; işlevsel katman güvenli null kontrolleri, klavye desteği ve daha sağlam olay yönetimiyle güncellenmiştir. Giriş, dosya yükleme ve gerçek indirme için bir backend/API bağlanması gerekir.
+## Geliştirme yönü
+Bir sonraki büyük aşama yönetim panelidir: kaynak doğrulama kuyruğu, bozuk bağlantı taraması, içerik raporları, üniversite/program veri importları ve arama analitiği.
