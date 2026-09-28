@@ -1,11 +1,18 @@
 {
-  "name":"Notora — Üniversite Bilgi ve Çalışma Merkezi",
-  "short_name":"Notora",
-  "description":"Üniversite öğrencileri için güvenilir kaynaklar, ders haritası, sınav takvimi ve çalışma araçları.",
-  "lang":"tr",
-  "start_url":"/",
-  "display":"standalone",
-  "background_color":"#f4f7f5",
-  "theme_color":"#0d7f75",
-  "icons":[]
+  "name": "Notora — Üniversite Bilgi ve Çalışma Merkezi",
+  "short_name": "Notora",
+  "description": "Üniversite öğrencileri için güvenilir kaynaklar, ders haritası, sınav takvimi ve çalışma araçları.",
+  "lang": "tr",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f7f5",
+  "theme_color": "#0d7f75",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
