@@ -524,7 +524,8 @@ async function loadCatalog() {
     }
 
     const levelCounts = {};
-    for (const item of cache.programs) {
+    for (const programIndex of turkeyProgramIndexes) {
+      const item = cache.programs[programIndex];
       if (item?.level) levelCounts[item.level] = (levelCounts[item.level] || 0) + 1;
     }
     catalogMeta.levels = levelCounts;
