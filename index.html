@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="styles.css?v=4"><link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css?v=5"><link rel="manifest" href="manifest.json">
 </head>
 <body>
 <div class="shell">
@@ -31,8 +31,8 @@
     <div class="trust-strip"><span>✓ Resmî kaynaklar etiketlenir</span><span>✓ Güncel doğrulama tarihi</span><span>✓ Öğrenci katkıları ayrı gösterilir</span></div>
   </div>
   <aside class="hero-side">
-    <div class="status-card"><div><span class="live-dot"></span><b>Bilgi akışı</b></div><small id="lastSync">Kaynaklar yükleniyor…</small></div>
-    <div class="hero-stats"><div><small>Kütüphane</small><strong id="statResources">—</strong><span>doğrulanmış bağlantı</span></div><div><small>Öğrenci notları</small><strong id="statNotes">—</strong><span>topluluk kaynağı</span></div><div><small>Yaklaşan</small><strong id="statEvents">—</strong><span>sınav & fırsat</span></div><div><small>Üniversiteler</small><strong id="heroUniversityCount">—</strong><span>2025 katalog kaydı</span></div></div>
+    <div class="status-card status-card-live"><div><span class="live-dot"></span><b>Bilgi akışı</b><span class="status-chip">CANLI</span></div><small id="lastSync">Kaynaklar yükleniyor…</small></div>
+    <div class="hero-stats"><div><small>Kütüphane</small><strong id="statResources">—</strong><span>doğrulanmış bağlantı</span></div><div><small>Öğrenci notları</small><strong id="statNotes">—</strong><span>topluluk kaynağı</span></div><div><small>Yaklaşan</small><strong id="statEvents">—</strong><span>sınav & fırsat</span></div><div><small>Türkiye kurumları</small><strong id="heroUniversityCount">—</strong><span>yükseköğretim kataloğu</span></div></div>
   </aside>
 </section>
 
@@ -73,7 +73,7 @@
     <div>
       <span class="eyebrow">Türkiye kataloğu</span>
       <h2>Üniversiteleri ve bölümleri tek yerde keşfet.</h2>
-      <p>2025 YÖK Atlas tabanlı açık veriyle üniversite, ön lisans ve lisans programlarını arayabilir; şehir ve eğitim düzeyine göre daraltabilirsin.</p>
+      <p>Türkiye yükseköğretim kataloğunu üniversite, bölüm/program ve şehir bazında ara; lisans ve ön lisans kayıtlarını ayrı ayrı filtrele.</p>
     </div>
   </div>
 
@@ -87,6 +87,7 @@
     <div class="catalog-tabs">
       <button class="catalog-tab active" data-kind="programs" type="button">Bölümler / Programlar</button>
       <button class="catalog-tab" data-kind="universities" type="button">Üniversiteler</button>
+      <button class="catalog-tab" data-kind="offers" type="button">Program–Üniversite</button>
     </div>
     <input id="catalogSearch" type="search" placeholder="Örn. Bilgisayar Mühendisliği, İstanbul, Koç…" aria-label="Üniversite ve bölüm kataloğunda ara">
     <select id="catalogLevel"><option value="all">Tüm düzeyler</option><option value="Lisans">Lisans</option><option value="Ön Lisans">Ön Lisans</option></select>
@@ -95,7 +96,11 @@
 
   <div class="catalog-result-line">
     <span id="catalogResultInfo">Katalog yükleniyor…</span>
-    <span>İlk 60 eşleşme gösterilir.</span>
+    <span>2025 açık veri görünümü · İlk 60 eşleşme</span>
+  </div>
+  <div class="catalog-source-note">
+    <span>Güncel resmî kaynak:</span>
+    <a href="https://osym.gov.tr/2026-yuksekogretim-kurumlari-sinavi-yks-yuksekogretim-programlari-ve-kontenjanlari-kilavuzu" target="_blank" rel="noopener">ÖSYM 2026 YKS Program & Kontenjan Kılavuzu ↗</a>
   </div>
   <div id="catalogGrid" class="catalog-grid"></div>
 </section>
@@ -119,5 +124,5 @@
 <div class="modal hidden" id="authModal"><div class="modal-backdrop" data-close></div><div class="modal-card"><button class="modal-close" data-close>×</button><span class="eyebrow">Notora hesabı</span><h3 id="authTitle">Giriş yap</h3><p class="modal-sub">Kaynak paylaşmak ve kişisel çalışma alanını senkronlamak için hesabını kullan.</p><form id="authForm"><label>E-posta<input id="authEmail" type="email" required autocomplete="email"></label><label>Şifre<div class="password-field"><input id="authPassword" type="password" minlength="6" required autocomplete="current-password"><button type="button" id="authPasswordToggle" class="password-toggle">Göster</button></div></label><label id="authNameWrap" class="hidden">Ad Soyad<input id="authName" autocomplete="name"></label><button class="primary-btn full" id="authSubmit" type="submit">Giriş Yap</button></form><div id="authMessage" class="auth-message" aria-live="polite"></div><button class="text-btn switch" id="authSwitch">Hesabın yok mu? Kayıt ol</button></div></div>
 <div class="modal hidden" id="shareModal"><div class="modal-backdrop" data-close></div><div class="modal-card wide"><button class="modal-close" data-close>×</button><span class="eyebrow">Topluluğa katkı</span><h3>Kaynak paylaş</h3><form id="shareForm"><div class="form-grid"><label>Başlık<input name="title" required></label><label>Bölüm<input name="department" required placeholder="Örn. Bilgisayar Mühendisliği"></label><label>Sınıf<select name="study_year"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><label>Konu<input name="topic"></label><label>Tür<select name="content_type"><option>Ders Notu</option><option>Sınav Hazırlık</option><option>Özet</option><option>Slayt</option></select></label><label>Üniversite<input name="university"></label><label class="full">Açıklama<textarea name="description" rows="3"></textarea></label><label class="file full">Dosya<input name="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" required><small>PDF, Word, PowerPoint veya TXT</small></label></div><button class="primary-btn full" type="submit">Yükle ve yayınla</button></form></div></div>
 <div class="toast" id="toast" aria-live="polite"></div>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body></html>
