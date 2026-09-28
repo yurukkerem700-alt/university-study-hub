@@ -47,6 +47,33 @@ const cache = {
 const catalogState = { q: "", kind: "programs", level: "all", city: "all" };
 let catalogLoaded = false;
 const catalogMeta = { offers: 0, universities: 0, programs: 0 };
+const LOCAL_CACHE_PREFIX = "notora_live_cache_v1_";
+
+function readLocalCache(key, fallback = []) {
+  try {
+    const value = JSON.parse(localStorage.getItem(LOCAL_CACHE_PREFIX + key) || "null");
+    return Array.isArray(value) ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeLocalCache(key, value) {
+  try {
+    localStorage.setItem(
+      LOCAL_CACHE_PREFIX + key,
+      JSON.stringify(Array.isArray(value) ? value : [])
+    );
+  } catch {
+    // Storage quotas or privacy settings should never block the app.
+  }
+}
+
+function hydrateLiveCache() {
+  cache.resources = readLocalCache("resources", cache.resources);
+  cache.notes = readLocalCache("notes", cache.notes);
+  cache.events = readLocalCache("events", cache.events);
+}
 
 const escapeHtml = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -322,6 +349,8 @@ async function fetchEvents() {
 async function loadAll() {
   $("#resultsLoading").style.display = "block";
 
+  hydrateLiveCache();
+
   const results = await Promise.allSettled([
     fetchResources(),
     fetchNotes(),
@@ -330,23 +359,40 @@ async function loadAll() {
   ]);
 
   const [resources, notes, events, catalog] = results;
-  cache.resources = resources.status === "fulfilled" ? resources.value : [];
-  cache.notes = notes.status === "fulfilled" ? notes.value : [];
-  cache.events = events.status === "fulfilled" ? events.value : [];
-  cache.catalog = catalog.status === "fulfilled" ? catalog.value : [];
+
+  if (resources.status === "fulfilled") {
+    cache.resources = resources.value;
+    writeLocalCache("resources", cache.resources);
+  }
+  if (notes.status === "fulfilled") {
+    cache.notes = notes.value;
+    writeLocalCache("notes", cache.notes);
+  }
+  if (events.status === "fulfilled") {
+    cache.events = events.value;
+    writeLocalCache("events", cache.events);
+  }
+  cache.catalog = catalog.status === "fulfilled" ? catalog.value : cache.catalog;
 
   renderResults();
   renderEvents();
   updateStats();
   $("#resultsLoading").style.display = "none";
-  $("#lastSync").textContent =
-    "Son veri kontrolü: " +
-    new Date().toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" });
+
+  const successful = [resources, notes, events].some((item) => item.status === "fulfilled");
+  $("#lastSync").textContent = successful
+    ? "Canlı veri kontrolü: " +
+      new Date().toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" })
+    : "Canlı bağlantı bekleniyor · önbellekteki veriler gösteriliyor";
 
   const failed = results.filter((item) => item.status === "rejected");
   if (failed.length) {
     console.warn("Kısmi Supabase yükleme hatası:", failed.map((item) => item.reason));
-    showToast("Bazı canlı kaynaklar yüklenemedi; Türkiye kataloğu yine kullanılabilir.");
+    if (!successful) {
+      showToast("Canlı bağlantı kurulamadı; daha önce yüklenen veriler gösteriliyor.");
+    } else {
+      showToast("Bazı canlı kaynaklar yüklenemedi; mevcut veriler korunuyor.");
+    }
   }
 }
 
@@ -1093,6 +1139,65 @@ function removeTask(id) {
   renderTasks();
 }
 
+function buildShareUrl() {
+  const url = new URL(window.location.href);
+  url.hash = "discover";
+  url.search = "";
+  const params = new URLSearchParams();
+  if (state.q) params.set("q", state.q);
+  if (state.tab !== "all") params.set("tab", state.tab);
+  if (state.department !== "all") params.set("department", state.department);
+  if (state.year !== "all") params.set("year", state.year);
+  if (state.topic !== "all") params.set("topic", state.topic);
+  if (state.type !== "all") params.set("type", state.type);
+  url.search = params.toString();
+  return url.toString();
+}
+
+async function shareCurrentView() {
+  const url = buildShareUrl();
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast("Bölüm/filtre bağlantısı panoya kopyalandı.");
+  } catch {
+    window.prompt("Bağlantıyı kopyala:", url);
+  }
+}
+
+function applySharedView() {
+  const params = new URLSearchParams(window.location.search);
+  const allowedTabs = new Set(["all", "resource", "note", "event"]);
+  const tab = params.get("tab");
+  const assignments = {
+    q: "searchInput",
+    department: "departmentSelect",
+    year: "yearSelect",
+    topic: "topicSelect",
+    type: "typeSelect",
+  };
+
+  if (params.get("q")) {
+    state.q = params.get("q").slice(0, 120);
+    $("#searchInput").value = state.q;
+  }
+
+  for (const [key, id] of Object.entries(assignments)) {
+    if (key === "q") continue;
+    const value = params.get(key);
+    const input = $("#" + id);
+    if (value && input && [...input.options].some((option) => option.value === value)) {
+      input.value = value;
+      state[key] = value;
+    }
+  }
+
+  if (tab && allowedTabs.has(tab)) {
+    state.tab = tab;
+    $(".tab").forEach((button) => button.classList.toggle("active", button.dataset.tab === tab));
+  }
+}
+
+
 function bindCatalogEvents() {
   $("#catalogSearch")?.addEventListener("input", (event) => {
     catalogState.q = event.target.value;
@@ -1274,6 +1379,8 @@ function bindEvents() {
   $("#authForm").addEventListener("submit", submitAuth);
   $("#shareForm").addEventListener("submit", shareNote);
 
+  $("#sharePageBtn")?.addEventListener("click", shareCurrentView);
+
   $("#reportBtn").addEventListener("click", () => {
     showToast("Kaynak raporlama modülü yönetim paneline bağlanacak.");
   });
@@ -1320,6 +1427,7 @@ function bindEvents() {
 addCourseRow();
 renderTasks();
 renderTimer();
+applySharedView();
 bindEvents();
 bindCatalogEvents();
 
