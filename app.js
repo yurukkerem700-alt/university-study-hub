@@ -501,6 +501,7 @@ async function shareNote(event) {
   showToast("Kaynak yayınlandı.");
   await loadAll();
   renderRoadmap();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
 
 async function downloadNote(id) {
