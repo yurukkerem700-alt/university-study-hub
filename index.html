@@ -13,24 +13,33 @@
 </head>
 <body>
 <div class="shell">
-<header class="topbar">
-  <a class="brand" href="#/home" data-route-link="home"><span class="mark">N</span><span><b>Notora</b><small>Öğrencinin dijital çalışma merkezi</small></span></a>
-  <nav>
-    <a href="#/home" data-route-link="home">Ana Sayfa</a>
-    <a href="#/discover" data-route-link="discover">Keşfet</a>
-    <a href="#/catalog" data-route-link="catalog">Üniversite & Bölüm</a>
-    <a href="#/roadmap" data-route-link="roadmap">Yol Haritası</a>
-    <a href="#/calendar" data-route-link="calendar">Takvim</a>
-    <a href="#/tools" data-route-link="tools">Çalışma</a>
-    <a href="#/community" data-route-link="community">Topluluk</a>
-    <a href="#/profile" data-route-link="profile">Profil</a>
+<div class="app-frame">
+<aside class="app-rail">
+  <a class="rail-brand" href="#/home" data-route-link="home"><span class="rail-logo">N</span><span><b>Notora</b><small>Academic OS</small></span></a>
+  <div class="rail-section-label">Workspace</div>
+  <nav class="rail-nav">
+    <a href="#/home" data-route-link="home"><span class="rail-index">01</span><span>Ana Sayfa</span></a>
+    <a href="#/discover" data-route-link="discover"><span class="rail-index">02</span><span>Keşfet</span></a>
+    <a href="#/catalog" data-route-link="catalog"><span class="rail-index">03</span><span>Üniversite & Bölüm</span></a>
+    <a href="#/roadmap" data-route-link="roadmap"><span class="rail-index">04</span><span>Yol Haritası</span></a>
+    <a href="#/calendar" data-route-link="calendar"><span class="rail-index">05</span><span>Takvim</span></a>
+    <a href="#/tools" data-route-link="tools"><span class="rail-index">06</span><span>Çalışma</span></a>
+    <a href="#/community" data-route-link="community"><span class="rail-index">07</span><span>Topluluk</span></a>
   </nav>
-  <div class="actions">
-    <button class="ghost-btn" id="sharePageBtn">↗ Bölüm bağlantısı</button>
-    <button class="ghost-btn" id="authBtn">Giriş Yap</button>
-    <button class="primary-btn" id="shareBtn">＋ Not Paylaş</button>
+  <div class="rail-spacer"></div>
+  <a class="rail-profile-link" href="#/profile" data-route-link="profile"><span class="rail-avatar">P</span><span><b>Profil</b><small>Kişisel merkez</small></span></a>
+  <div class="rail-tools">
+    <button class="rail-btn" id="sharePageBtn">Bölüm bağlantısı</button>
+    <button class="rail-btn rail-btn-primary" id="shareBtn">Not paylaş</button>
+    <button class="rail-btn" id="authBtn">Giriş Yap</button>
   </div>
+</aside>
+<div class="app-content">
+<header class="command-bar">
+  <div class="command-left"><span class="command-kicker">NOTORA / STUDENT WORKSPACE</span><span class="command-title" id="commandPageTitle">Ana Sayfa</span></div>
+  <div class="command-right"><span class="command-status"><i></i> Sistem hazır</span></div>
 </header>
+
 
 <main>
 <section class="page-view" data-route="home" id="pageHome">
@@ -40,7 +49,7 @@
       <h1>Bugünkü adımını bil,<br><em>hedefe doğru ilerle.</em></h1>
       <p>Notora; bölümünü, sınıfını ve hedefini seçtiğinde sana uygun kaynakları, yol haritasını ve günlük çalışma adımlarını tek çalışma alanında toplar.</p>
       <div class="personal-welcome" id="personalWelcome">
-        <div><strong>Hoş geldin 👋</strong><span>Profilini tamamladığında ana sayfa sana göre şekillenecek.</span></div>
+        <div><strong>Hoş geldin</strong><span>Profilini tamamladığında ana sayfa sana göre şekillenecek.</span></div>
         <a class="secondary-btn" href="#/profile" data-route-link="profile">Profilimi ayarla</a>
       </div>
       <form class="global-search" id="searchForm">
@@ -111,10 +120,10 @@
       <div><span>Veri yılı</span><strong>2025</strong></div>
     </div>
     <div class="catalog-level-strip" id="catalogLevelStrip">
-      <button class="level-card active" data-level-view="undergraduate"><span>🎓</span><b>Ön Lisans + Lisans</b><small>Mevcut katalog verisi</small></button>
-      <button class="level-card" data-level-view="graduate"><span>🎓</span><b>Yüksek Lisans</b><small>Veri katmanı hazır</small></button>
-      <button class="level-card" data-level-view="doctorate"><span>🔬</span><b>Doktora</b><small>Veri katmanı hazır</small></button>
-      <button class="level-card" data-level-view="highschool"><span>🏫</span><b>Lise</b><small>Kaynak merkezi</small></button>
+      <button class="level-card active" data-level-view="undergraduate"><span>01</span><b>Ön Lisans + Lisans</b><small>Mevcut katalog verisi</small></button>
+      <button class="level-card" data-level-view="graduate"><span>02</span><b>Yüksek Lisans</b><small>Veri katmanı hazır</small></button>
+      <button class="level-card" data-level-view="doctorate"><span>03</span><b>Doktora</b><small>Veri katmanı hazır</small></button>
+      <button class="level-card" data-level-view="highschool"><span>04</span><b>Lise</b><small>Kaynak merkezi</small></button>
     </div>
     <div class="catalog-toolbar">
       <div class="catalog-tabs">
@@ -189,6 +198,7 @@
   </section>
 </section>
 </main>
+</div>
 </div>
 
 <div class="modal hidden" id="authModal"><div class="modal-backdrop" data-close></div><div class="modal-card"><button class="modal-close" data-close>×</button><span class="eyebrow">Notora hesabı</span><h3 id="authTitle">Giriş yap</h3><p class="modal-sub">Kaynak paylaşmak ve kişisel çalışma alanını senkronlamak için hesabını kullan.</p><form id="authForm"><label>E-posta<input id="authEmail" type="email" required autocomplete="email"></label><label>Şifre<div class="password-field"><input id="authPassword" type="password" minlength="6" required autocomplete="current-password"><button type="button" id="authPasswordToggle" class="password-toggle">Göster</button></div></label><label id="authNameWrap" class="hidden">Ad Soyad<input id="authName" autocomplete="name"></label><button class="primary-btn full" id="authSubmit" type="submit">Giriş Yap</button></form><div id="authMessage" class="auth-message" aria-live="polite"></div><button class="text-btn switch" id="authSwitch">Hesabın yok mu? Kayıt ol</button></div></div>
