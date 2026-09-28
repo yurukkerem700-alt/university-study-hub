@@ -451,6 +451,7 @@ async function shareNote(event) {
   event.currentTarget.reset();
   showToast("Kaynak yayınlandı.");
   await loadAll();
+renderRoadmap();
   renderRoadmap();
 }
 
