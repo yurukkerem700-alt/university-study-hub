@@ -528,6 +528,56 @@ function renderCatalog() {
     return;
   }
 
+  if (catalogState.kind === "offers") {
+    const rows = cache.catalogOffers
+      .map((offer, index) => ({
+        index,
+        university: cache.universities[offer[0]],
+        program: cache.programs[offer[1]],
+        code: offer[2] || ""
+      }))
+      .filter(({ university, program }) => {
+        if (!isTurkey(university) || !program) return false;
+        const haystack = [
+          university.name,
+          university.city,
+          program.name,
+          program.level,
+          program.score_type
+        ].join(" ").toLocaleLowerCase("tr-TR");
+        return (
+          (!q || haystack.includes(q)) &&
+          (catalogState.city === "all" || university.city === catalogState.city) &&
+          (catalogState.level === "all" || program.level === catalogState.level)
+        );
+      });
+
+    grid.innerHTML =
+      rows.slice(0, 60).map(({ university, program, code }) =>
+        '<article class="catalog-card offer-card">' +
+        '<div class="catalog-card-top"><span class="catalog-badge">' +
+        escapeHtml(program.level || "Program") +
+        '</span><span class="catalog-city">' +
+        escapeHtml(university.city || "—") +
+        '</span></div>' +
+        '<h3>' + escapeHtml(program.name) + '</h3>' +
+        '<p><strong>' + escapeHtml(university.name) + '</strong><br>' +
+        escapeHtml(program.score_type || "Puan türü yok") + ' · ' +
+        escapeHtml(program.duration_years || "—") + ' yıl</p>' +
+        '<div class="catalog-meta"><span>' +
+        escapeHtml(code || "Program kodu yok") +
+        '</span><span>' + CATALOG_SOURCE_YEAR + '</span></div>' +
+        '</article>'
+      ).join("") ||
+      '<div class="loading">Aramana uygun program–üniversite kaydı bulunamadı.</div>';
+
+    $("#catalogResultInfo").textContent =
+      rows.length > 60
+        ? "İlk 60 program–üniversite kaydı gösteriliyor."
+        : rows.length.toLocaleString("tr-TR") + " Türkiye program–üniversite kaydı";
+    return;
+  }
+
   const turkeyProgramIndexes = new Set(
     cache.catalogOffers
       .filter((offer) => isTurkey(cache.universities[offer[0]]))
@@ -1063,8 +1113,11 @@ function bindCatalogEvents() {
       $$(".catalog-tab").forEach((item) => item.classList.remove("active"));
       button.classList.add("active");
       catalogState.kind = button.dataset.kind;
-      $("#catalogCity")?.classList.toggle("hidden", catalogState.kind !== "universities");
-      $("#catalogLevel")?.classList.toggle("hidden", catalogState.kind !== "programs");
+      $("#catalogCity")?.classList.toggle(
+        "hidden",
+        !["universities", "offers"].includes(catalogState.kind)
+      );
+      $("#catalogLevel")?.classList.toggle("hidden", catalogState.kind === "universities");
       renderCatalog();
     });
   });
