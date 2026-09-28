@@ -1005,7 +1005,7 @@ function renderTasks() {
     .map(
       (task) => `
         <div class="task ${task.done ? "done" : ""}" data-id="${task.id}">
-          <span>✓</span>
+          <span class="task-mark" aria-hidden="true"></span>
           <span>${escapeHtml(task.text)}</span>
           <button type="button" data-remove-task="${task.id}" aria-label="Görevi sil">×</button>
         </div>
