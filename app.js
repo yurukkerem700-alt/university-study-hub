@@ -206,14 +206,14 @@ function noteCard(note) {
         <span>·</span>
         <span>${note.study_year || "-"}. sınıf</span>
         <span>·</span>
-        <span>⭐ ${Number(note.rating || 0).toFixed(1)}</span>
+        <span>${Number(note.rating || 0).toFixed(1)}</span>
       </div>
       <div class="result-foot">
-        <small>⬇ ${compact(note.downloads)} · ♥ ${compact(note.likes_count)}</small>
+        <small>${compact(note.downloads)} · · ${compact(note.likes_count)}</small>
         <div class="result-actions">
           <button class="ghost-btn" data-note-preview="${note.id}">Önizle</button>
           <button class="ghost-btn" data-note-like="${note.id}">♥</button>
-          <button class="ghost-btn" data-note-save="${note.id}">☆</button>
+          <button class="ghost-btn" data-note-save="${note.id}">Kaydet</button>
           <button class="ghost-btn" data-note-rate="${note.id}">Puanla</button>
           <button class="secondary-btn" data-note-download="${note.id}">İndir</button>
         </div>
@@ -566,7 +566,7 @@ function renderCatalogPagination(total) {
 }
 function catalogLevelOverview() {
   const cards = [
-    {key:"highschool",icon:"🏫",title:"Lise",text:"Lise dersleri, sınav hazırlığı ve konu kaynakları için ayrı kaynak merkezi. Yükseköğretim kataloğundan bağımsız tutulur.",status:"Kaynak katmanı"},
+    {key:"highschool",icon:"" "",title:"Lise",text:"Lise dersleri, sınav hazırlığı ve konu kaynakları için ayrı kaynak merkezi. Yükseköğretim kataloğundan bağımsız tutulur.",status:"Kaynak katmanı"},
     {key:"associate",icon:"🎓",title:"Ön Lisans",text:(catalogMeta.levels["Ön Lisans"]||0).toLocaleString("tr-TR")+" program türü; Türkiye program–üniversite kayıtları ayrıca sayfalanır.",status:"Katalogda mevcut"},
     {key:"undergrad",icon:"🎓",title:"Lisans",text:(catalogMeta.levels["Lisans"]||0).toLocaleString("tr-TR")+" program türü; Türkiye program–üniversite kayıtları ayrıca sayfalanır.",status:"Katalogda mevcut"},
     {key:"graduate",icon:"🧪",title:"Yüksek Lisans",text:"Lisansüstü veri, mevcut YÖK 2025 lisans/ön lisans verisine karıştırılmıyor. Ayrı kaynak katmanı için hazır.",status:"Lisansüstü katmanı"},
@@ -1059,7 +1059,7 @@ function writeLocalPreferences(prefs){try{localStorage.setItem("notora_preferenc
 function applyTheme(theme){document.body.dataset.theme=theme==="dark"?"dark":"";}
 function preferencesFromForm(){return{education_level:$("#prefEducationLevel")?.value||"Lisans",university:$("#prefUniversity")?.value.trim()||"",department:$("#prefDepartment")?.value.trim()||"",study_year:$("#prefYear")?.value||"",goal:$("#prefGoal")?.value.trim()||"",daily_minutes:Number($("#prefDailyMinutes")?.value||60),focus_mode:$("#prefFocusMode")?.value||"pomodoro",theme:$("#prefTheme")?.value||"system",notifications:true,preferred_topics:($("#prefTopics")?.value||"").split(",").map((x)=>x.trim()).filter(Boolean).slice(0,12)};}
 function renderPreferences(prefs=readLocalPreferences()){const map=[["prefEducationLevel","education_level"],["prefUniversity","university"],["prefDepartment","department"],["prefYear","study_year"],["prefGoal","goal"],["prefDailyMinutes","daily_minutes"],["prefFocusMode","focus_mode"],["prefTheme","theme"]];for(const[id,key]of map){const el=$("#"+id);if(el&&prefs[key]!==undefined&&prefs[key]!==null)el.value=String(prefs[key]);}if($("#prefTopics"))$("#prefTopics").value=(prefs.preferred_topics||[]).join(", ");applyTheme(prefs.theme);updatePersonalWelcome(prefs);renderPreferenceChips(prefs);}
-function updatePersonalWelcome(prefs){const welcome=$("#personalWelcome");if(!welcome)return;const title=prefs.department||prefs.goal||prefs.university?"Çalışma alanın hazır":"Hoş geldin 👋";const detail=[prefs.department,prefs.study_year?prefs.study_year+". sınıf":"",prefs.goal].filter(Boolean).join(" · ");welcome.querySelector("strong")&&(welcome.querySelector("strong").textContent=title);welcome.querySelector("span")&&(welcome.querySelector("span").textContent=detail||"Profilini tamamladığında ana sayfa sana göre şekillenecek.");}
+function updatePersonalWelcome(prefs){const welcome=$("#personalWelcome");if(!welcome)return;const title=prefs.department||prefs.goal||prefs.university?"Çalışma alanın hazır":"Hoş geldin";const detail=[prefs.department,prefs.study_year?prefs.study_year+". sınıf":"",prefs.goal].filter(Boolean).join(" · ");welcome.querySelector("strong")&&(welcome.querySelector("strong").textContent=title);welcome.querySelector("span")&&(welcome.querySelector("span").textContent=detail||"Profilini tamamladığında ana sayfa sana göre şekillenecek.");}
 async function loadPreferences(){const local=readLocalPreferences();renderPreferences(local);const session=await getSession();if(!session?.user?.id)return;const{data,error}=await db.from("user_preferences").select("*").eq("id",session.user.id).maybeSingle();if(!error&&data){writeLocalPreferences({...local,...data});renderPreferences({...local,...data});}}
 async function savePreferences(event){event.preventDefault();const prefs=preferencesFromForm();writeLocalPreferences(prefs);renderPreferences(prefs);const status=$("#preferencesStatus");if(status)status.textContent="Cihazında kaydedildi.";const session=await getSession();if(session?.user?.id){const{error}=await db.from("user_preferences").upsert({...prefs,id:session.user.id,study_year:prefs.study_year?Number(prefs.study_year):null,updated_at:new Date().toISOString()},{onConflict:"id"});if(error){if(status)status.textContent="Cihazında kaydedildi; hesap senkronu başarısız.";console.warn("Tercihler senkronlanamadı:",error);}else if(status)status.textContent="Hesabınla da senkronlandı."; } renderTodayFocus(); showToast("Kişisel ayarların kaydedildi.");}
 function renderPreferenceChips(prefs=readLocalPreferences()){const box=$("#preferenceChips");if(box){const chips=[prefs.education_level,prefs.university,prefs.department,prefs.study_year?prefs.study_year+". sınıf":"",prefs.goal].filter(Boolean);box.innerHTML=chips.map((chip)=>"<span>"+escapeHtml(chip)+"</span>").join("");}if($("#profileSummary"))$("#profileSummary").textContent=[prefs.university,prefs.department,prefs.study_year?prefs.study_year+". sınıf":"",prefs.goal].filter(Boolean).join(" · ")||"Profilini doldurduğunda önerilerin daha kişisel hale gelir.";if($("#profileTitle"))$("#profileTitle").textContent=prefs.university||prefs.department||"Öğrenci";}
