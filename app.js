@@ -1,6 +1,23 @@
 const SUPABASE_URL = "https://snvteuqzstctmqlsgyhr.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudnRldXF6c3RjdG1xbHNneWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNjk1ODAsImV4cCI6MjEwNTY0NTU4MH0.cd6s5mWpaepkE2vlZWiEeMJLU_n3vQx6YBnHJRD2boI";
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_0oJW2Ui715WZdqQmVp23TPw_vU4E93ZK";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudnRldXF6c3RjdG1xbHNneWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNjk1ODAsImV4cCI6MjEwNTY0NTU4MH0.cd6s5mWpaepK2vlZWiEeMJLU_n3vQx6YBnHJRD2boI";
+let db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+let usingLegacyKey = false;
+
+async function initializeSupabase() {
+  const probe = await db.from("knowledge_resources").select("id").limit(1);
+
+  if (!probe.error || probe.error.status !== 401) return;
+
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  usingLegacyKey = true;
+
+  const fallbackProbe = await db.from("knowledge_resources").select("id").limit(1);
+  if (fallbackProbe.error) {
+    console.error("Supabase erişim hatası:", fallbackProbe.error);
+  }
+}
+
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -968,6 +985,9 @@ addCourseRow();
 renderTasks();
 renderTimer();
 bindEvents();
-refreshAuthUi();
-loadAll();
-renderRoadmap();
+initializeSupabase().then(async () => {
+  await refreshAuthUi();
+  await loadAll();
+  await renderRoadmap();
+  if (usingLegacyKey) showToast("Bağlantı otomatik olarak uyumlu Supabase anahtarına geçirildi.");
+});
