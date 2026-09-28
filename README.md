@@ -1,27 +1,72 @@
 # Notora — University Study Hub
 
-Notora artık yalnızca bir demo arayüzü değil; Supabase tabanlı üniversite bilgi ve kaynak keşif merkezi olarak çalışır.
+Notora, üniversite öğrencisinin ders, sınav, araştırma, kariyer ve akademik yaşam bilgisine tek noktadan ulaşmasını hedefleyen bir bilgi ve çalışma merkezidir.
 
-## Ana yapı
-- Global arama: güvenilir kaynaklar + öğrenci notları + yaklaşan tarihler
-- Kaynak güven etiketi: resmî / doğrulanmış dış kaynak / öğrenci
-- Kaynağın sahibi, URL'si ve son doğrulama tarihi görünür
-- YÖK, ÖSYM, e-Devlet, İŞKUR, TÜBİTAK, MIT OpenCourseWare ve OpenStax gibi doğrulanmış kaynak dizini
-- Gerçek Supabase Auth ve kullanıcı hesabı
-- Gerçek not yükleme ve indirme
-- PDF / DOC / DOCX / PPT / PPTX / TXT desteği
-- Öğrenci filtreleme ve sıralama
-- ÖSYM/TÜBİTAK takvim kayıtları
-- GANO hesaplayıcı, Pomodoro ve günlük görev listesi
-- Responsive erişilebilirlik ve "/" ile hızlı arama
+## Bugünkü mimari
+
+- Supabase veri katmanı
+- Gerçek Auth (e-posta/şifre)
+- RLS ile kullanıcı bazlı erişim
+- Storage ile öğrenci dosyaları
+- Bilgi kaynağı kataloğu: 51 doğrulanmış/kurumsal-akademik kaynak
+- Ders haritası: 90 alan/sınıf/konu kaydı
+- Akademik takvim: 2026 sınav ve burs kayıtları
+- Topluluk notları: öğrenci yüklemeli PDF/DOC/DOCX/PPT/PPTX/TXT
+- Çalışma araçları: GANO, Pomodoro, günlük görevler
+- PWA: manifest + offline shell + service worker
 
 ## Güven modeli
-Notora dış kaynakların içeriğini kendi içeriğiymiş gibi kopyalamaz. Kaynağı, kurumunu ve bağlantısını gösterir. Öğrenci tarafından yüklenen dosyalar ayrı bir kaynak türüdür.
 
-## Supabase
-Project: `notbul`
-Tablolar: `profiles`, `notes`, `note_likes`, `bookmarks`, `note_ratings`, `knowledge_resources`, `academic_events`
-Storage: `note-files`
+Kaynaklar üç ayrı sınıfta tutulur:
 
-## Geliştirme yönü
-Bir sonraki büyük aşama yönetim panelidir: kaynak doğrulama kuyruğu, bozuk bağlantı taraması, içerik raporları, üniversite/program veri importları ve arama analitiği.
+1. Resmî kaynak: kurumun kendi web yayını (YÖK, ÖSYM, TÜBİTAK, İŞKUR, e-Devlet vb.)
+2. Doğrulanmış dış kaynak: akademik/eğitim kurumu veya açık eğitim platformu (MIT OpenCourseWare, OpenStax, PubMed, DOAJ, Crossref, Google Scholar vb.)
+3. Öğrenci kaynağı: topluluk tarafından yüklenen dosya.
+
+Notora dış web içeriğini kopyalayıp kendi içeriği gibi sunmaz; kaynağın kimden geldiğini ve bağlantısını gösterir.
+
+## Ders haritası
+
+study_catalog tablosu üniversiteye özgü zorunlu müfredat iddiasında bulunmadan genel bir akademik yol haritası sağlar. Üniversite ve programların gerçek ders planları zaman içinde değişebileceği için resmî müfredat bağlantıları ayrıca kaynak olarak gösterilmelidir.
+
+Alanlar:
+- Genel Akademik
+- Bilgisayar
+- Mühendislik
+- Elektrik-Elektronik
+- İktisat
+- İşletme
+- Hukuk
+- Sağlık
+- Fen Bilimleri
+- Sosyal Bilimler
+
+Her alan 1–4. sınıf seviyelerinde konu başlıklarına ayrılmıştır.
+
+## Mobil gelecek
+
+Web sürümü PWA olarak hazırlanmıştır. Aynı Supabase şeması ileride React Native/Expo, native iOS/Android veya başka bir istemci tarafından API üzerinden kullanılabilecek şekilde tutulur.
+
+## Production veri modeli
+
+profiles
+notes
+note_likes
+bookmarks
+note_ratings
+note_download_events
+knowledge_resources
+academic_events
+study_catalog
+
+## Sonraki teknik katman
+
+- kaynak doğrulama kuyruğu
+- bozuk bağlantı otomatik taraması
+- yönetici paneli
+- üniversite/program veri importları
+- konu → kaynak → not ilişkileri
+- gelişmiş tam metin arama
+- kişiselleştirilmiş öğrenci ana sayfası
+- bildirimler ve yaklaşan sınav/başvuru hatırlatıcıları
+- mobil istemci
