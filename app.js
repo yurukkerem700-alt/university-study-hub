@@ -816,9 +816,9 @@ function bindEvents() {
   });
 
   $("#roadmapDomain")?.addEventListener("change", renderRoadmap);
-  $(".year-tab").forEach((button) => {
+  document.querySelectorAll(".year-tab").forEach((button) => {
     button.addEventListener("click", () => {
-      $(".year-tab").forEach((item) => item.classList.remove("active"));
+      document.querySelectorAll(".year-tab").forEach((item) => item.classList.remove("active"));
       button.classList.add("active");
       renderRoadmap();
     });
@@ -880,7 +880,7 @@ function bindEvents() {
     if (rateButton) rateNote(Number(rateButton.dataset.noteRate));
     if (roadmapButton) {
       $("#roadmapDomain").value = roadmapButton.dataset.domain;
-      $(".year-tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.year === roadmapButton.dataset.year));
+      document.querySelectorAll(".year-tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.year === roadmapButton.dataset.year));
       document.querySelector("#roadmap")?.scrollIntoView({ behavior: "smooth", block: "start" });
       renderRoadmap();
     }
