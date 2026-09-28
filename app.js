@@ -1,24 +1,14 @@
 const SUPABASE_URL = "https://snvteuqzstctmqlsgyhr.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_0oJW2Ui715WZdqQmVp23TPw_vU4E93ZK";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudnRldXF6c3RjdG1xbHNneWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNjk1ODAsImV4cCI6MjEwNTY0NTU4MH0.cd6s5mWpaepK2vlZWiEeMJLU_n3vQx6YBnHJRD2boI";
-let db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-let usingLegacyKey = false;
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});
 let authSubscription = null;
-
-async function initializeSupabase() {
-  const probe = await db.from("knowledge_resources").select("id").limit(1);
-
-  if (!probe.error || probe.error.status !== 401) return;
-
-  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  usingLegacyKey = true;
-
-  const fallbackProbe = await db.from("knowledge_resources").select("id").limit(1);
-  if (fallbackProbe.error) {
-    console.error("Supabase erişim hatası:", fallbackProbe.error);
-  }
-}
-
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -39,7 +29,14 @@ const cache = {
   notes: [],
   events: [],
   catalog: [],
+  universities: [],
+  programs: [],
+  catalogOffers: [],
 };
+
+const catalogState = { q: "", kind: "programs", level: "all", city: "all" };
+let catalogLoaded = false;
+const catalogMeta = { offers: 0, universities: 0, programs: 0 };
 
 const escapeHtml = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -77,9 +74,50 @@ async function getSession() {
   return (await db.auth.getSession()).data.session;
 }
 
+function setAuthMessage(message = "", type = "") {
+  const box = $("#authMessage");
+  if (!box) return;
+  box.textContent = message;
+  box.className = "auth-message" + (type ? " " + type : "");
+}
+
+function setAuthMode(mode = "login") {
+  const signup = mode === "signup";
+  $("#authNameWrap")?.classList.toggle("hidden", !signup);
+  $("#authTitle").textContent = signup ? "Hesap oluştur" : "Giriş yap";
+  $("#authSubmit").textContent = signup ? "Hesap oluştur" : "Giriş yap";
+  $("#authSwitch").textContent = signup ? "Zaten hesabın var mı? Giriş yap" : "Hesabın yok mu? Kayıt ol";
+  $("#authPassword")?.setAttribute("autocomplete", signup ? "new-password" : "current-password");
+  setAuthMessage("");
+}
+
+function authErrorMessage(error) {
+  const message = String(error?.message || "Beklenmeyen bir hata oluştu.");
+  if (/invalid login credentials/i.test(message)) return "E-posta veya şifre hatalı.";
+  if (/email not confirmed/i.test(message)) return "E-posta adresini doğruladıktan sonra giriş yapabilirsin.";
+  if (/user already registered/i.test(message)) return "Bu e-posta ile zaten bir hesap var. Giriş yapmayı dene.";
+  if (/password.*(6|characters|length)/i.test(message)) return "Şifre en az 6 karakter olmalı.";
+  if (/rate limit|too many requests/i.test(message)) return "Çok fazla deneme yapıldı. Biraz sonra tekrar deneyin.";
+  if (/invalid api key/i.test(message)) return "Supabase bağlantı anahtarı geçersiz. Sayfayı yenileyip tekrar dene.";
+  return message;
+}
+
+async function syncProfile(user, displayName = "") {
+  if (!user?.id) return;
+  const name = displayName.trim() || user.user_metadata?.display_name || "Öğrenci";
+  const { error } = await db.from("profiles").upsert(
+    { id: user.id, display_name: name, updated_at: new Date().toISOString() },
+    { onConflict: "id" }
+  );
+  if (error) console.warn("Profil senkronizasyonu başarısız:", error);
+}
+
 async function refreshAuthUi() {
   const session = await getSession();
-  $("#authBtn").textContent = session ? "Çıkış Yap" : "Giriş Yap";
+  const button = $("#authBtn");
+  if (!button) return;
+  button.textContent = session ? "Çıkış Yap" : "Giriş Yap";
+  button.title = session ? `${session.user.email} · Çıkış yap` : "Giriş yap";
 }
 
 function resourceCard(resource) {
@@ -267,36 +305,31 @@ async function fetchEvents() {
 async function loadAll() {
   $("#resultsLoading").style.display = "block";
 
-  try {
-    const [resources, notes, events, catalog] = await Promise.all([
-      fetchResources(),
-      fetchNotes(),
-      fetchEvents(),
-      fetchCatalogMatches(),
-    ]);
+  const results = await Promise.allSettled([
+    fetchResources(),
+    fetchNotes(),
+    fetchEvents(),
+    fetchCatalogMatches(),
+  ]);
 
-    cache.resources = resources;
-    cache.notes = notes;
-    cache.events = events;
-    cache.catalog = catalog;
+  const [resources, notes, events, catalog] = results;
+  cache.resources = resources.status === "fulfilled" ? resources.value : [];
+  cache.notes = notes.status === "fulfilled" ? notes.value : [];
+  cache.events = events.status === "fulfilled" ? events.value : [];
+  cache.catalog = catalog.status === "fulfilled" ? catalog.value : [];
 
-    renderResults();
-    renderEvents();
-    updateStats();
+  renderResults();
+  renderEvents();
+  updateStats();
+  $("#resultsLoading").style.display = "none";
+  $("#lastSync").textContent =
+    "Son veri kontrolü: " +
+    new Date().toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" });
 
-    $("#resultsLoading").style.display = "none";
-    $("#lastSync").textContent =
-      "Son veri kontrolü: " +
-      new Date().toLocaleString("tr-TR", {
-        dateStyle: "short",
-        timeStyle: "short",
-      });
-  } catch (error) {
-    console.error(error);
-    $("#resultsLoading").style.display = "none";
-    $("#resultsGrid").innerHTML =
-      '<div class="loading" style="grid-column:1/-1">Kaynaklar yüklenemedi. Bağlantını kontrol edip tekrar dene.</div>';
-    showToast("Veri yüklenirken bir hata oluştu.");
+  const failed = results.filter((item) => item.status === "rejected");
+  if (failed.length) {
+    console.warn("Kısmi Supabase yükleme hatası:", failed.map((item) => item.reason));
+    showToast("Bazı canlı kaynaklar yüklenemedi; Türkiye kataloğu yine kullanılabilir.");
   }
 }
 
@@ -357,6 +390,113 @@ function renderEvents() {
   $("#eventsList").innerHTML = cache.events.length
     ? cache.events.slice(0, 8).map(eventCard).join("")
     : '<div class="loading">Yaklaşan kayıt bulunamadı.</div>';
+}
+
+
+async function loadCatalog() {
+  if (catalogLoaded) return;
+
+  try {
+    const base = "data/catalog/";
+    const [universitiesResponse, programsResponse, offersResponse] = await Promise.all([
+      fetch(base + "universities.json", { cache: "no-store" }),
+      fetch(base + "programs.json", { cache: "no-store" }),
+      fetch(base + "offers.json", { cache: "no-store" }),
+    ]);
+
+    if (!universitiesResponse.ok || !programsResponse.ok || !offersResponse.ok) {
+      throw new Error("Türkiye katalog dosyaları yüklenemedi.");
+    }
+
+    const [universitiesPayload, programsPayload, offersPayload] = await Promise.all([
+      universitiesResponse.json(),
+      programsResponse.json(),
+      offersResponse.json(),
+    ]);
+
+    cache.universities = universitiesPayload.items || [];
+    cache.programs = programsPayload.items || [];
+    cache.catalogOffers = offersPayload.items || [];
+
+    catalogMeta.offers = offersPayload.meta?.offer_count || cache.catalogOffers.length;
+    catalogMeta.universities = universitiesPayload.meta?.university_count || cache.universities.length;
+    catalogMeta.programs = programsPayload.meta?.program_count || cache.programs.length;
+    catalogLoaded = true;
+
+    const citySelect = $("#catalogCity");
+    if (citySelect) {
+      const cities = [...new Set(cache.universities.map((item) => item.city).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, "tr"));
+      citySelect.innerHTML =
+        '<option value="all">Tüm şehirler</option>' +
+        cities.map((city) => '<option value="' + escapeHtml(city) + '">' + escapeHtml(city) + "</option>").join("");
+    }
+
+    $("#catalogUniversityCount") && ($("#catalogUniversityCount").textContent = catalogMeta.universities.toLocaleString("tr-TR"));
+    $("#catalogProgramCount") && ($("#catalogProgramCount").textContent = catalogMeta.programs.toLocaleString("tr-TR"));
+    $("#catalogOfferCount") && ($("#catalogOfferCount").textContent = catalogMeta.offers.toLocaleString("tr-TR"));
+    $("#heroUniversityCount") && ($("#heroUniversityCount").textContent = catalogMeta.universities.toLocaleString("tr-TR"));
+    renderCatalog();
+  } catch (error) {
+    console.error("Katalog yükleme hatası:", error);
+    const grid = $("#catalogGrid");
+    if (grid) grid.innerHTML = '<div class="loading">Türkiye katalog verisi yüklenemedi.</div>';
+  }
+}
+
+function renderCatalog() {
+  const grid = $("#catalogGrid");
+  if (!grid || !catalogLoaded) return;
+
+  const q = catalogState.q.trim().toLocaleLowerCase("tr-TR");
+
+  if (catalogState.kind === "universities") {
+    const rows = cache.universities
+      .map((item, index) => ({ ...item, index }))
+      .filter((item) => {
+        const haystack = [item.name, item.city, item.type].join(" ").toLocaleLowerCase("tr-TR");
+        return (!q || haystack.includes(q)) &&
+          (catalogState.city === "all" || item.city === catalogState.city);
+      });
+
+    grid.innerHTML = rows.slice(0, 60).map((item) => {
+      const count = cache.catalogOffers.filter((offer) => offer[0] === item.index).length;
+      return '<article class="catalog-card">' +
+        '<div class="catalog-card-top"><span class="catalog-badge">' + escapeHtml(item.type) + '</span><span class="catalog-city">' + escapeHtml(item.city || "—") + '</span></div>' +
+        '<h3>' + escapeHtml(item.name) + '</h3>' +
+        '<p>' + count.toLocaleString("tr-TR") + ' program/tercih kaydı</p>' +
+        '<div class="catalog-meta"><span>' + escapeHtml(item.region) + '</span><span>2025 verisi</span></div>' +
+        '</article>';
+    }).join("") || '<div class="loading">Aramana uygun üniversite bulunamadı.</div>';
+
+    $("#catalogResultInfo").textContent = rows.length > 60
+      ? "İlk 60 sonuç gösteriliyor."
+      : rows.length.toLocaleString("tr-TR") + " üniversite";
+    return;
+  }
+
+  const rows = cache.programs
+    .map((item, index) => ({ ...item, index }))
+    .filter((item) => {
+      const haystack = [item.name, item.level, item.score_type, ...(item.faculties || [])]
+        .join(" ").toLocaleLowerCase("tr-TR");
+      return (!q || haystack.includes(q)) &&
+        (catalogState.level === "all" || item.level === catalogState.level);
+    });
+
+  grid.innerHTML = rows.slice(0, 60).map((item) => {
+    const count = cache.catalogOffers.filter((offer) => offer[1] === item.index).length;
+    return '<article class="catalog-card">' +
+      '<div class="catalog-card-top"><span class="catalog-badge">' + escapeHtml(item.level) + '</span><span class="catalog-city">' + escapeHtml(item.score_type || "—") + '</span></div>' +
+      '<h3>' + escapeHtml(item.name) + '</h3>' +
+      '<p>' + count.toLocaleString("tr-TR") + ' üniversite/program kaydında yer alıyor · ' + escapeHtml(item.duration_years || "—") + ' yıl</p>' +
+      '<div class="catalog-meta"><span>' + escapeHtml((item.faculties || []).slice(0, 2).join(" · ") || "Fakülte bilgisi yok") + '</span><span>2025</span></div>' +
+      '</article>';
+  }).join("") || '<div class="loading">Aramana uygun bölüm/program bulunamadı.</div>';
+
+  $("#catalogResultInfo").textContent = rows.length > 60
+    ? "İlk 60 sonuç gösteriliyor."
+    : rows.length.toLocaleString("tr-TR") + " program";
 }
 
 
@@ -445,29 +585,55 @@ async function requireUser() {
 async function submitAuth(event) {
   event.preventDefault();
 
-  const email = $("#authEmail").value.trim();
+  const email = $("#authEmail").value.trim().toLowerCase();
   const password = $("#authPassword").value;
   const displayName = $("#authName").value.trim();
   const signup = !$("#authNameWrap").classList.contains("hidden");
+  const submit = $("#authSubmit");
 
-  const response = signup
-    ? await db.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { display_name: displayName || "Öğrenci" },
-        },
-      })
-    : await db.auth.signInWithPassword({ email, password });
+  setAuthMessage("");
+  submit.disabled = true;
+  submit.textContent = signup ? "Hesap oluşturuluyor…" : "Giriş yapılıyor…";
 
-  if (response.error) {
-    showToast(response.error.message);
-    return;
+  try {
+    const response = signup
+      ? await db.auth.signUp({
+          email,
+          password,
+          options: { data: { display_name: displayName || "Öğrenci" } },
+        })
+      : await db.auth.signInWithPassword({ email, password });
+
+    if (response.error) throw response.error;
+
+    if (signup) {
+      if (response.data.session && response.data.user) {
+        await syncProfile(response.data.user, displayName);
+        closeModals();
+        showToast("Hesabın oluşturuldu ve giriş yapıldı.");
+      } else {
+        setAuthMessage(
+          "Kayıt tamamlandı. E-posta adresine gelen doğrulama bağlantısını onayla, ardından giriş yap.",
+          "success"
+        );
+        $("#authPassword").value = "";
+        showToast("Doğrulama e-postanı kontrol et.");
+      }
+    } else {
+      await syncProfile(response.data.user);
+      closeModals();
+      showToast("Giriş başarılı.");
+    }
+
+    await refreshAuthUi();
+  } catch (error) {
+    console.error("Auth hatası:", error);
+    setAuthMessage(authErrorMessage(error), "error");
+    showToast(authErrorMessage(error));
+  } finally {
+    submit.disabled = false;
+    submit.textContent = signup ? "Hesap oluştur" : "Giriş yap";
   }
-
-  closeModals();
-  showToast(signup ? "Kayıt başarılı. E-postanı doğrulaman gerekebilir." : "Giriş başarılı.");
-  await refreshAuthUi();
 }
 
 async function shareNote(event) {
@@ -791,6 +957,34 @@ function removeTask(id) {
   renderTasks();
 }
 
+function bindCatalogEvents() {
+  $("#catalogSearch")?.addEventListener("input", (event) => {
+    catalogState.q = event.target.value;
+    renderCatalog();
+  });
+
+  $("#catalogLevel")?.addEventListener("change", (event) => {
+    catalogState.level = event.target.value;
+    renderCatalog();
+  });
+
+  $("#catalogCity")?.addEventListener("change", (event) => {
+    catalogState.city = event.target.value;
+    renderCatalog();
+  });
+
+  $(".catalog-tab").forEach((button) => {
+    button.addEventListener("click", () => {
+      $(".catalog-tab").forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      catalogState.kind = button.dataset.kind;
+      $("#catalogCity")?.classList.toggle("hidden", catalogState.kind !== "universities");
+      $("#catalogLevel")?.classList.toggle("hidden", catalogState.kind !== "programs");
+      renderCatalog();
+    });
+  });
+}
+
 function bindEvents() {
   [
     ["department", "departmentSelect"],
@@ -927,12 +1121,15 @@ function bindEvents() {
 
   $("#authSwitch").addEventListener("click", () => {
     const isLogin = $("#authNameWrap").classList.contains("hidden");
-    $("#authNameWrap").classList.toggle("hidden", !isLogin);
-    $("#authTitle").textContent = isLogin ? "Hesap oluştur" : "Giriş yap";
-    $("#authSubmit").textContent = isLogin ? "Kayıt Ol" : "Giriş Yap";
-    $("#authSwitch").textContent = isLogin
-      ? "Zaten hesabın var mı? Giriş yap"
-      : "Hesabın yok mu? Kayıt ol";
+    setAuthMode(isLogin ? "signup" : "login");
+  });
+
+  $("#authPasswordToggle")?.addEventListener("click", () => {
+    const input = $("#authPassword");
+    const button = $("#authPasswordToggle");
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    button.textContent = show ? "Gizle" : "Göster";
   });
 
   $("#authForm").addEventListener("submit", submitAuth);
@@ -985,11 +1182,13 @@ addCourseRow();
 renderTasks();
 renderTimer();
 bindEvents();
-initializeSupabase().then(async () => {
-  authSubscription?.unsubscribe?.();
-  authSubscription = db.auth.onAuthStateChange(() => refreshAuthUi());
-  await refreshAuthUi();
-  await loadAll();
-  await renderRoadmap();
-  if (usingLegacyKey) showToast("Bağlantı otomatik olarak uyumlu Supabase anahtarına geçirildi.");
+bindCatalogEvents();
+
+authSubscription = db.auth.onAuthStateChange(() => {
+  refreshAuthUi();
 });
+
+(async () => {
+  await refreshAuthUi();
+  await Promise.allSettled([loadAll(), renderRoadmap(), loadCatalog()]);
+})();
