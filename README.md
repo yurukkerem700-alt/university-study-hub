@@ -1,3 +1,5 @@
+<p align="center"><img src=".github/cover.png" alt="NOTORA" width="100%"></p>
+
 # Notora — University Study Hub
 
 Notora, üniversite öğrencisinin ders, sınav, araştırma, kariyer ve akademik yaşam bilgisine tek noktadan ulaşmasını hedefleyen bir bilgi ve çalışma merkezidir.
@@ -75,3 +77,7 @@ study_catalog
 ## Türkiye üniversite/program kataloğu
 
 Arayüzdeki katalog, 2025 YÖK Atlas tabanlı açık veriden derlenen 224 üniversite/kurum, 2.765 farklı program türü ve 21.542 üniversite-program kaydını içerir. Kaynak veri: cngil/turkiye-university-programs (CC BY 4.0). Katalog yeni YÖK Atlas verisi yayımlandıkça güncellenmelidir.
+
+---
+
+© 2026 YÖRÜKHAN STÜDYO — Tüm hakları saklıdır. Bu projenin kodu, tasarımı, oyun fikri ve görselleri izinsiz kopyalanamaz, çoğaltılamaz veya ticari amaçla kullanılamaz.
