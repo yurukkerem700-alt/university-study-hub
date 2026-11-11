@@ -15,6 +15,7 @@ Notora, üniversite öğrencisinin ders, sınav, araştırma, kariyer ve akademi
 - Akademik takvim: 2026 sınav ve burs kayıtları
 - Topluluk notları: öğrenci yüklemeli PDF/DOC/DOCX/PPT/PPTX/TXT
 - Çalışma araçları: GANO, Pomodoro, günlük görevler
+- **Çalışma Defteri**: kendi notunu yaz/yapıştır, okurken önemli yerleri 4 renkle işaretle, ★ ile çok önemli yerleri vurgula, işarete not ekle, seçimden bilgi kartı üret, kartları aralıklı tekrarla (Leitner). Giriş yapılmışsa hesapta (RLS ile kişiye özel), yapılmamışsa cihazda saklanır; giriş yapınca cihazdaki defterler hesaba taşınır.
 - PWA: manifest + offline shell + service worker
 
 ## Güven modeli
@@ -81,3 +82,11 @@ Arayüzdeki katalog, 2025 YÖK Atlas tabanlı açık veriden derlenen 224 ünive
 ---
 
 © 2026 YÖRÜKHAN STÜDYO — Tüm hakları saklıdır. Bu projenin kodu, tasarımı, oyun fikri ve görselleri izinsiz kopyalanamaz, çoğaltılamaz veya ticari amaçla kullanılamaz.
+
+
+## Kurulum ve belgeler
+
+- Veritabanı şeması: [`supabase/schema.sql`](supabase/schema.sql)
+- Giriş/Kayıt: Supabase Auth (e-posta + şifre). Site, Supabase projesi etkinken doğrudan çalışır; `app.js` başındaki `SUPABASE_URL` ve publishable anahtar bu projeye aittir.
+- Yerelde çalıştırma: klasörde `python -m http.server 8000`, ardından `http://localhost:8000`.
+- Mesleki Çözümleme sınav belgesi (proje özeti, algoritma şeması, use-case, E-R diyagramı, SQL): [`belge/Notora_Sinav_Belgesi.pdf`](belge/Notora_Sinav_Belgesi.pdf) ve HTML kaynağı.

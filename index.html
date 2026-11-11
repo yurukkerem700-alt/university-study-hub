@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="styles.css?v=9"><link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css?v=10"><link rel="manifest" href="manifest.json">
 </head>
 <body data-theme="light">
 <div class="shell">
@@ -24,7 +24,8 @@
     <a href="#/roadmap" data-route-link="roadmap"><span class="rail-index">04</span><span>Yol Haritası</span></a>
     <a href="#/calendar" data-route-link="calendar"><span class="rail-index">05</span><span>Takvim</span></a>
     <a href="#/tools" data-route-link="tools"><span class="rail-index">06</span><span>Çalışma</span></a>
-    <a href="#/community" data-route-link="community"><span class="rail-index">07</span><span>Topluluk</span></a>
+    <a href="#/defter" data-route-link="defter"><span class="rail-index">07</span><span>Çalışma Defteri</span></a>
+    <a href="#/community" data-route-link="community"><span class="rail-index">08</span><span>Topluluk</span></a>
   </nav>
   <div class="rail-spacer"></div>
   <a class="rail-profile-link" href="#/profile" data-route-link="profile"><span class="rail-avatar">P</span><span><b>Profil</b><small>Kişisel merkez</small></span></a>
@@ -178,6 +179,20 @@
   <section class="panel mini-dashboard"><div><span class="eyebrow">Bugün</span><h2 id="todayFocusTitle">Çalışma oturumunu başlat.</h2><p id="todayFocusText">Profilindeki günlük süre hedefine göre plan oluşturacağız.</p></div><div class="today-metrics"><div><b id="todayMinutes">0</b><span>dk odak</span></div><div><b id="todayTasks">0</b><span>tamamlanan görev</span></div><div><b id="todayStreak">0</b><span>gün serisi</span></div></div></section>
 </section>
 
+<section class="page-view" data-route="defter" id="pageDefter">
+  <section class="panel sr-shell">
+    <div class="section-head"><div><span class="eyebrow">Çalışma defteri</span><h2>Oku, işaretle, tekrar et.</h2><p>Ders notunu yaz veya yapıştır, önemli yerleri renkle işaretle, işaretten bilgi kartı üret ve aralıklı tekrarla ezberle.</p></div><span class="sr-status" id="srStatus">Yükleniyor…</span></div>
+    <div class="sr-layout">
+      <aside class="sr-side">
+        <form id="srNewForm" class="sr-new"><input id="srNewTitle" placeholder="Yeni defter başlığı (örn. Veritabanı 1. hafta)" maxlength="120"><input id="srNewCourse" placeholder="Ders (isteğe bağlı)" maxlength="80"><button class="primary-btn full" type="submit">＋ Defter aç</button></form>
+        <input id="srSearch" class="sr-search" type="search" placeholder="Defterlerde ara" aria-label="Defterlerde ara">
+        <div id="srList" class="sr-list"></div>
+      </aside>
+      <div class="sr-main" id="srMain"></div>
+    </div>
+  </section>
+</section>
+
 <section class="page-view" data-route="community" id="pageCommunity">
   <section class="panel community-panel"><div class="section-head"><div><span class="eyebrow">Topluluk</span><h2>Notunu paylaş, başkasının önünü aç.</h2><p>Dosya yüklemeleri bölüm, sınıf, konu ve üniversite bilgileriyle sınıflandırılır; böylece arkadaşların doğrudan kendi alanlarına ulaşabilir.</p></div><button class="primary-btn" id="shareBtn2">＋ Kaynak paylaş</button></div></section>
   <section class="panel community-info"><div><b>Notora kuralı</b><span>Öğrenci kaynağı, resmî kaynakla aynı güven seviyesinde gösterilmez.</span></div><div><b>Dosya akışı</b><span>PDF, Word, PowerPoint ve TXT kaynakları uygulamanın not kütüphanesine eklenir.</span></div><div><b>Paylaşım bağlantısı</b><span>Filtrelenmiş bölüm/sınıf görünümünü tek tıkla arkadaşına gönderebilirsin.</span></div></section>
@@ -214,5 +229,6 @@
 <div class="modal hidden" id="shareModal"><div class="modal-backdrop" data-close></div><div class="modal-card wide"><button class="modal-close" data-close>×</button><span class="eyebrow">Topluluğa katkı</span><h3>Kaynak paylaş</h3><form id="shareForm"><div class="form-grid"><label>Başlık<input name="title" required></label><label>Bölüm<input name="department" required placeholder="Örn. Bilgisayar Mühendisliği"></label><label>Sınıf<select name="study_year"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><label>Konu<input name="topic"></label><label>Tür<select name="content_type"><option>Ders Notu</option><option>Sınav Hazırlık</option><option>Özet</option><option>Slayt</option></select></label><label>Üniversite<input name="university"></label><label class="full">Açıklama<textarea name="description" rows="3"></textarea></label><label class="file full">Dosya<input name="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" required><small>PDF, Word, PowerPoint veya TXT</small></label></div><button class="primary-btn full" type="submit">Yükle ve yayınla</button></form></div></div>
 <div class="modal hidden" id="readerModal"><div class="modal-backdrop" data-close></div><div class="modal-card wide reader-card"><button class="modal-close" data-close>×</button><span class="eyebrow">Notora içi görüntüleme</span><h3 id="readerTitle">Kaynak</h3><p id="readerMeta" class="modal-sub"></p><iframe id="readerFrame" title="Not görüntüleyici"></iframe><div id="readerFallback" class="reader-fallback hidden"></div></div></div>
 <div class="toast" id="toast" aria-live="polite"></div>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
+<script src="study-room.js?v=10"></script>
 </body></html>

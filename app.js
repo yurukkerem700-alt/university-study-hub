@@ -1069,7 +1069,7 @@ function getFocusState(){try{const raw=JSON.parse(localStorage.getItem("notora_f
 function addFocusMinutes(minutes){const s=getFocusState();s.minutes+=Number(minutes||0);if(s.minutes>0&&!s.dayCounted){s.streak=Math.max(1,s.streak);s.dayCounted=true;}localStorage.setItem("notora_focus_state",JSON.stringify(s));updateTodayDashboard();}
 function updateTodayDashboard(){const focus=getFocusState();const tasks=readTasks();if($("#todayMinutes"))$("#todayMinutes").textContent=String(focus.minutes||0);if($("#todayTasks"))$("#todayTasks").textContent=String(tasks.filter((t)=>t.done).length);if($("#todayStreak"))$("#todayStreak").textContent=String(focus.streak||0);}
 function renderTodayFocus(){const prefs=readLocalPreferences();if($("#todayFocusTitle"))$("#todayFocusTitle").textContent=prefs.goal?"Bugünkü hedef: "+prefs.goal:"Bugünkü çalışma oturumunu başlat.";if($("#todayFocusText"))$("#todayFocusText").textContent="Günlük hedefin "+(prefs.daily_minutes||60)+" dakika. Bir oturum başlatıp tek konuya odaklan.";updateTodayDashboard();}
-const routeTitles={home:"Ana Sayfa",discover:"Keşfet",catalog:"Üniversite & Bölüm",roadmap:"Yol Haritası",calendar:"Takvim",tools:"Çalışma",community:"Topluluk",profile:"Profil"};
+const routeTitles={home:"Ana Sayfa",discover:"Keşfet",catalog:"Üniversite & Bölüm",roadmap:"Yol Haritası",calendar:"Takvim",tools:"Çalışma",defter:"Çalışma Defteri",community:"Topluluk",profile:"Profil"};
 
 function initNotoraMotion(){
   document.body.classList.add("motion-ready");
@@ -1195,6 +1195,7 @@ function renderRoute(){
   $$("[data-route-link]").forEach((link)=>link.classList.toggle("active",link.dataset.routeLink===route));
   document.title="Notora — "+routeTitles[route];
   if($("#commandPageTitle"))$("#commandPageTitle").textContent=routeTitles[route];
+  if(route==="defter")window.StudyRoom?.open();
   if(route==="catalog")loadCatalog();
   if(route==="roadmap")renderRoadmap();
   if(route==="discover"||route==="calendar")loadAll();
